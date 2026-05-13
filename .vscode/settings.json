@@ -1,152 +1,171 @@
 {
-    // ── Formatowanie ──────────────────────────────────────────────────
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.formatOnSave": true,
-    "editor.formatOnPaste": false,
-    "editor.tabSize": 2,
-    "editor.insertSpaces": true,
+  // ── Formatowanie ──────────────────────────────────────────────────
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": false,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
 
-    // Prettier jako formatter dla konkretnych języków
-    "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-    "[javascriptreact]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
+  // Prettier jako formatter dla konkretnych języków
+  "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[css]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[html]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+
+  // ── ESLint ────────────────────────────────────────────────────────
+  "eslint.enable": true,
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  // Automatyczna naprawa ESLint przy zapisie
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+
+  // ── TypeScript ────────────────────────────────────────────────────
+  // Używaj lokalnego TS z node_modules zamiast wbudowanego w VS Code
+  "js/ts.tsdk.path": "frontend/node_modules/typescript/lib",
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+  "js/ts.preferences.importModuleSpecifier": "relative",
+
+  // ── Tailwind IntelliSense ─────────────────────────────────────────
+  // Podpowiedzi klas Tailwinda wewnątrz cn(), clsx(), cva()
+  "tailwindCSS.experimental.classRegex": [
+    ["cn\\(([^)]*)\\)", "'([^']*)'"],
+    ["clsx\\(([^)]*)\\)", "'([^']*)'"],
+    ["cva\\(([^)]*)\\)", "'([^']*)'"]
+  ],
+
+  // ── Edytor – wygląd i DX ─────────────────────────────────────────
+  "editor.wordWrap": "off",
+  "editor.minimap.enabled": false, // wyłącz minimap (odchudza UI)
+  "editor.stickyScroll.enabled": true, // "przyklejony" kontekst funkcji/klasy
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": "active",
+  "editor.inlayHints.enabled": "on", // podpowiedzi typów inline (TS)
+  "editor.linkedEditing": true, // edycja obu tagów JSX jednocześnie
+
+  // ── Pliki ─────────────────────────────────────────────────────────
+  "files.eol": "\n", // LF wszędzie (ważne przy pracy Windows/Mac/Linux)
+  "files.trimTrailingWhitespace": true,
+  "editor.trimAutoWhitespace": false,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+
+  // Wyklucz śmieci z Explorera (nie z gita – to robi .gitignore)
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.turbo": true,
+    "**/*.tsbuildinfo": true
+  },
+
+  // Watcher nie musi obserwować node_modules
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.git/objects/**": true
+  },
+
+  // ── Explorer ──────────────────────────────────────────────────────
+  "explorer.compactFolders": false, // nie zwijaj "src/components/ui" w jeden wiersz
+  "explorer.fileNesting.enabled": true, // grupuj powiązane pliki
+  "explorer.fileNesting.patterns": {
+    "*.ts": "${capture}.test.ts, ${capture}.spec.ts",
+    "*.tsx": "${capture}.test.tsx, ${capture}.spec.tsx, ${capture}.stories.tsx",
+    "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, .npmrc",
+    "vite.config.*": "tsconfig.json, tsconfig.*.json",
+    "docker-compose.yml": "docker-compose.*.yml, .env, .env.*",
+    ".env.example": ".env, .env.*"
+  },
+
+  // ── Terminal ──────────────────────────────────────────────────────
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.defaultProfile.osx": "zsh",
+
+  // ── Git ───────────────────────────────────────────────────────────
+  "git.autofetch": true,
+  "git.confirmSync": false,
+  "gitlens.currentLine.enabled": true, // blame w aktywnej linii
+  "gitlens.hovers.currentLine.over": "line",
+
+  // ── Docker ────────────────────────────────────────────────────────
+  "docker.defaultRegistryPath": "",
+
+  // ── REST Client ───────────────────────────────────────────────────
+  // Domyślne środowisko dla plików .http
+  "rest-client.environmentVariables": {
+    "local": {
+      "baseUrl": "http://localhost:3000/api",
+      "token": ""
     },
-    "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-    "[typescriptreact]": {
-        "editor.defaultFormatter": "esbenp.prettier-vscode"
-    },
-    "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-    "[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-    "[css]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-    "[html]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
-    "[markdown]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+    "docker": {
+      "baseUrl": "http://backend:3000/api",
+      "token": ""
+    }
+  },
 
-    // ── ESLint ────────────────────────────────────────────────────────
-    "eslint.enable": true,
-    "eslint.validate": [
-        "javascript",
-        "javascriptreact",
-        "typescript",
-        "typescriptreact"
-    ],
-    // Automatyczna naprawa ESLint przy zapisie
-    "editor.codeActionsOnSave": {
-        "source.fixAll.eslint": "explicit",
-        "source.organizeImports": "explicit"
-    },
+  // ── SQLTools ──────────────────────────────────────────────────────
+  "sqltools.connections": [
+    {
+      "name": "PostgreSQL (local docker)",
+      "driver": "PostgreSQL",
+      "host": "localhost",
+      "port": 5432,
+      "database": "${env:POSTGRES_DB}",
+      "username": "${env:POSTGRES_USER}",
+      "password": "${env:POSTGRES_PASSWORD}"
+    }
+  ],
 
-    // ── TypeScript ────────────────────────────────────────────────────
-    // Używaj lokalnego TS z node_modules zamiast wbudowanego w VS Code
-    "js/ts.tsdk.path": "frontend/node_modules/typescript/lib",
-    "js/ts.tsdk.promptToUseWorkspaceVersion": true,
-    "js/ts.preferences.importModuleSpecifier": "relative",
-
-    // ── Tailwind IntelliSense ─────────────────────────────────────────
-    // Podpowiedzi klas Tailwinda wewnątrz cn(), clsx(), cva()
-    "tailwindCSS.experimental.classRegex": [
-        ["cn\\(([^)]*)\\)", "'([^']*)'"],
-        ["clsx\\(([^)]*)\\)", "'([^']*)'"],
-        ["cva\\(([^)]*)\\)", "'([^']*)'"]
-    ],
-
-    // ── Edytor – wygląd i DX ─────────────────────────────────────────
-    "editor.rulers": [80, 100], // pionowe linie pomocnicze
-    "editor.wordWrap": "off",
-    "editor.minimap.enabled": false, // wyłącz minimap (odchudza UI)
-    "editor.stickyScroll.enabled": true, // "przyklejony" kontekst funkcji/klasy
-    "editor.bracketPairColorization.enabled": true,
-    "editor.guides.bracketPairs": "active",
-    "editor.inlayHints.enabled": "on", // podpowiedzi typów inline (TS)
-    "editor.linkedEditing": true, // edycja obu tagów JSX jednocześnie
-
-    // ── Pliki ─────────────────────────────────────────────────────────
-    "files.eol": "\n", // LF wszędzie (ważne przy pracy Windows/Mac/Linux)
-    "files.trimTrailingWhitespace": true,
-    "editor.trimAutoWhitespace": false,
-    "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true,
-
-    // Wyklucz śmieci z Explorera (nie z gita – to robi .gitignore)
-    "files.exclude": {
-        "**/node_modules": true,
-        "**/.git": true,
-        "**/dist": true,
-        "**/build": true,
-        "**/.turbo": true,
-        "**/*.tsbuildinfo": true
-    },
-
-    // Watcher nie musi obserwować node_modules
-    "files.watcherExclude": {
-        "**/node_modules/**": true,
-        "**/dist/**": true,
-        "**/build/**": true,
-        "**/.git/objects/**": true
-    },
-
-    // ── Explorer ──────────────────────────────────────────────────────
-    "explorer.compactFolders": false, // nie zwijaj "src/components/ui" w jeden wiersz
-    "explorer.fileNesting.enabled": true, // grupuj powiązane pliki
-    "explorer.fileNesting.patterns": {
-        "*.ts": "${capture}.test.ts, ${capture}.spec.ts",
-        "*.tsx": "${capture}.test.tsx, ${capture}.spec.tsx, ${capture}.stories.tsx",
-        "package.json": "package-lock.json, yarn.lock, pnpm-lock.yaml, .npmrc",
-        "vite.config.*": "tsconfig.json, tsconfig.*.json",
-        "docker-compose.yml": "docker-compose.*.yml, .env, .env.*",
-        ".env.example": ".env, .env.*"
-    },
-
-    // ── Terminal ──────────────────────────────────────────────────────
-    "terminal.integrated.defaultProfile.linux": "bash",
-    "terminal.integrated.defaultProfile.osx": "zsh",
-
-    // ── Git ───────────────────────────────────────────────────────────
-    "git.autofetch": true,
-    "git.confirmSync": false,
-    "gitlens.currentLine.enabled": true, // blame w aktywnej linii
-    "gitlens.hovers.currentLine.over": "line",
-
-    // ── Docker ────────────────────────────────────────────────────────
-    "docker.defaultRegistryPath": "",
-
-    // ── REST Client ───────────────────────────────────────────────────
-    // Domyślne środowisko dla plików .http
-    "rest-client.environmentVariables": {
-        "local": {
-            "baseUrl": "http://localhost:3000/api",
-            "token": ""
-        },
-        "docker": {
-            "baseUrl": "http://backend:3000/api",
-            "token": ""
-        }
-    },
-
-    // ── SQLTools ──────────────────────────────────────────────────────
-    "sqltools.connections": [
-        {
-            "name": "PostgreSQL (local docker)",
-            "driver": "PostgreSQL",
-            "host": "localhost",
-            "port": 5432,
-            "database": "${env:POSTGRES_DB}",
-            "username": "${env:POSTGRES_USER}",
-            "password": "${env:POSTGRES_PASSWORD}"
-        }
-    ],
-
-    // ── Spell checker ─────────────────────────────────────────────────
-    "cSpell.language": "en,pl",
-    "cSpell.words": [
-        "vite",
-        "zustand",
-        "prisma",
-        "dockerize",
-        "tsconfig",
-        "esbenp",
-        "prettier",
-        "dbaeumer",
-        "middlewares"
-    ],
-    "cSpell.ignoreRegExpList": ["CStyleComment"]
+  // ── Spell checker ─────────────────────────────────────────────────
+  "cSpell.language": "en,pl",
+  "cSpell.words": [
+    "vite",
+    "zustand",
+    "prisma",
+    "dockerize",
+    "tsconfig",
+    "esbenp",
+    "prettier",
+    "dbaeumer",
+    "middlewares"
+  ],
+  "cSpell.ignoreRegExpList": ["CStyleComment"],
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#ab307e",
+    "activityBar.background": "#ab307e",
+    "activityBar.foreground": "#e7e7e7",
+    "activityBar.inactiveForeground": "#e7e7e799",
+    "activityBarBadge.background": "#25320e",
+    "activityBarBadge.foreground": "#e7e7e7",
+    "commandCenter.border": "#e7e7e799",
+    "sash.hoverBorder": "#ab307e",
+    "statusBar.background": "#832561",
+    "statusBar.foreground": "#e7e7e7",
+    "statusBarItem.hoverBackground": "#ab307e",
+    "statusBarItem.remoteBackground": "#832561",
+    "statusBarItem.remoteForeground": "#e7e7e7",
+    "titleBar.activeBackground": "#832561",
+    "titleBar.activeForeground": "#e7e7e7",
+    "titleBar.inactiveBackground": "#83256199",
+    "titleBar.inactiveForeground": "#e7e7e799"
+  },
+  "peacock.color": "#832561"
 }

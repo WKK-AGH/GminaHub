@@ -1,0 +1,19 @@
+{
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "server": "node server",
+    "client": "npm run dev --prefix client",
+    "dev": "concurrently \"node server\" \"npm run client\"",
+    "package": "npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "react-masonry-css": "^1.0.16",
+    "vite-plugin-svgr": "^5.2.0"
+  }
+}

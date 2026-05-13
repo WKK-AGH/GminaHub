@@ -17,9 +17,11 @@
 
   "overrides": [
     {
-      "files": ["*.json", "*.jsonc"],
+      "files": ["*.json", "*.jsonc", ".prettierrc"],
       "options": {
+        "tabWidth": 2,
         "printWidth": 80,
+        "singleQuote": false,
         "trailingComma": "none"
       }
     },
