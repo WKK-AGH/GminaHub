@@ -7,7 +7,7 @@
     "server": "node server",
     "client": "npm run dev --prefix client",
     "dev": "concurrently \"node server\" \"npm run client\"",
-    "package": "npm install"
+    "init": "node ./scripts/init.js"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

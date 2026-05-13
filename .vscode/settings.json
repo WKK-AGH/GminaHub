@@ -135,11 +135,10 @@
   ],
 
   // ── Spell checker ─────────────────────────────────────────────────
-  "cSpell.language": "en,pl",
+  "cSpell.language": "pl,en",
   "cSpell.words": [
     "vite",
     "zustand",
-    "prisma",
     "dockerize",
     "tsconfig",
     "esbenp",
@@ -147,7 +146,19 @@
     "dbaeumer",
     "middlewares"
   ],
-  "cSpell.ignoreRegExpList": ["CStyleComment"],
+  "cSpell.ignoreRegExpList": ["CStyleComment", "'[^']*'", "`[^`]*`"],
+  "cSpell.checkStrings": false,
+  "cSpell.ignorePaths": [
+    "**/*.log",
+    "**/*.sql",
+    "**/*.pdf",
+    "**/certs/**/*",
+    "**/.prettierignore",
+    "**/.gitignore",
+    "**/README.md"
+  ],
+
+  // ── Peacock ───────────────────────────────────────────────────────
   "workbench.colorCustomizations": {
     "activityBar.activeBackground": "#ab307e",
     "activityBar.background": "#ab307e",
