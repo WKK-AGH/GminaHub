@@ -33,10 +33,10 @@ materiały oraz prowadzić głosowania zdalnie.
     cd GminaHub
     ```
 
-3. Zainstaluj zależności:
+3. Zainicjalizuj:
 
     ```bash
-    npm install
+    npm run init
     ```
 
 ## Użytkowanie
@@ -44,7 +44,7 @@ materiały oraz prowadzić głosowania zdalnie.
 1. Uruchom aplikację lokalnie:
 
     ```bash
-    npm start
+    npm run dev
     ```
 
 2. Otwórz przeglądarkę i przejdź pod adres wskazany w konsoli.

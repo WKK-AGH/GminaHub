@@ -4,10 +4,10 @@
     "backend"
   ],
   "scripts": {
-    "server": "node server",
-    "client": "npm run dev --prefix client",
-    "dev": "concurrently \"node server\" \"npm run client\"",
-    "init": "node ./scripts/init.js"
+    "init": "node ./scripts/init.js",
+    "server": "node backend/server",
+    "client": "npm run dev --prefix frontend",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
   },
   "devDependencies": {
     "concurrently": "^9.2.1"
