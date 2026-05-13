@@ -1,0 +1,32 @@
+# Zależności
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Build output
+frontend/dist/
+frontend/build/
+backend/dist/
+backend/build/
+
+# Cache
+.cache/
+.turbo/
+.eslintcache
+
+# Logi
+*.log
+
+# Baza danych / Prisma (wygenerowany klient)
+backend/src/db/generated/
+
+# Pliki statyczne / publiczne (nie ruszaj cudzego kodu)
+frontend/public/
+
+# Docker
+postgres/data/
+
+# Inne
+*.min.js
+*.min.css
+coverage/

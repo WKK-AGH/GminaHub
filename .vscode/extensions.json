@@ -1,0 +1,51 @@
+{
+  //? Ctrl+Shift+P → "Extensions: Show Recommended Extensions"
+  "recommendations": [
+    // ── Ogólne ────────────────────────────────────────────────────
+    "editorconfig.editorconfig",
+    "streetsidesoftware.code-spell-checker",
+
+    // ── TypeScript / JavaScript ───────────────────────────────────
+    "ms-vscode.vscode-typescript-next",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+
+    // ── React / Frontend ──────────────────────────────────────────
+    "dsznajder.es7-react-js-snippets",
+    "burkeholland.simple-react-snippets",
+    "styled-components.vscode-styled-components",
+    "bradlc.vscode-tailwindcss",
+    "formulahendry.auto-rename-tag",
+
+    // ── Node.js / Backend ─────────────────────────────────────────
+    "christian-kohler.npm-intellisense",
+
+    // ── PostgreSQL / Bazy danych ──────────────────────────────────
+    "cweijan.dbclient-jdbc",
+
+    // ── Docker ────────────────────────────────────────────────────
+    "ms-azuretools.vscode-docker",
+    "ms-vscode-remote.remote-containers",
+
+    // ── Git ───────────────────────────────────────────────────────
+    "eamodio.gitlens",
+
+    // ── REST API / testowanie ─────────────────────────────────────
+    "humao.rest-client",
+
+    // ── DX / jakość życia ─────────────────────────────────────────
+    "aaron-bond.better-comments",
+    "gruntfuggly.todo-tree",
+    "christian-kohler.path-intellisense",
+    "wix.vscode-import-cost",
+    "formulahendry.auto-rename-tag",
+    "usernamehw.errorlens",
+    "pkief.material-icon-theme",
+    "johnpapa.vscode-peacock",
+    "jeff-hykin.polacode-2019",
+    "mechatroner.rainbow-csv",
+    "manishsencha.readme-preview",
+    "mcright.auto-save",
+    "tomoki1207.pdf"
+  ]
+}
