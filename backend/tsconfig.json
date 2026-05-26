@@ -1,57 +1,58 @@
 {
-    "compilerOptions": {
-        // ── Target i moduły ───────────────────────────────────────────
-        "target": "ES2022", // nowoczesny JS, Node 20 w pełni wspiera
-        "module": "CommonJS", // Node.js używa CommonJS (nie ESM)
-        "moduleResolution": "node", // rozwiązywanie modułów po staremu (node_modules)
-        "lib": ["ES2022"], // biblioteki wbudowane TS
+  "compilerOptions": {
+    "ignoreDeprecations": "6.0",
+    // ── Target i moduły ───────────────────────────────────────────
+    "target": "ES2022", // nowoczesny JS, Node 20 w pełni wspiera
+    "module": "CommonJS", // Node.js używa CommonJS (nie ESM)
+    "moduleResolution": "node", // rozwiązywanie modułów po staremu (node_modules)
+    "lib": ["ES2022"], // biblioteki wbudowane TS
 
-        // ── Ścieżki ───────────────────────────────────────────────────
-        "rootDir": "./src", // źródła tylko z /src
-        "outDir": "./dist", // skompilowany JS trafia do /dist
-        "baseUrl": ".", // bazowy punkt dla paths
-        "paths": {
-            // Aliasy
-            "@/*": ["src/*"]
-        },
-
-        // ── Interoperabilność ─────────────────────────────────────────
-        "esModuleInterop": true, // import express from 'express' zamiast * as express
-        "allowSyntheticDefaultImports": true,
-        "resolveJsonModule": true, // import config from './config.json'
-        "forceConsistentCasingInFileNames": true,
-
-        // ── Strict mode ───────────────────────────────────────────────
-        "strict": true, // włącza cały pakiet strict checks
-        "noImplicitAny": true, // brak ukrytych 'any'
-        "strictNullChecks": true, // null/undefined traktowane osobno
-        "strictFunctionTypes": true,
-        "noImplicitReturns": true, // każda ścieżka funkcji musi zwracać wartość
-        "noFallthroughCasesInSwitch": true,
-        "noUncheckedIndexedAccess": true, // array[i] zwraca T | undefined
-
-        // ── Jakość kodu ───────────────────────────────────────────────
-        "noUnusedLocals": true, // błąd przy nieużywanych zmiennych lokalnych
-        "noUnusedParameters": true, // błąd przy nieużywanych parametrach
-
-        // ── Source maps (debugging) ───────────────────────────────────
-        "sourceMap": true, // mapy źródłowe do debugowania dist/
-        "declaration": true, // generuj pliki .d.ts
-        "declarationMap": true, // mapy do .d.ts
-
-        // ── Pozostałe ─────────────────────────────────────────────────
-        "skipLibCheck": true, // pomija sprawdzanie typów w node_modules
-        "experimentalDecorators": true, // dekoratory (np. jeśli używasz class-validator)
-        "emitDecoratorMetadata": true // metadata dla dekoratorów (reflect-metadata)
+    // ── Ścieżki ───────────────────────────────────────────────────
+    "rootDir": "./src", // źródła tylko z /src
+    "outDir": "./dist", // skompilowany JS trafia do /dist
+    "baseUrl": ".", // bazowy punkt dla paths
+    "paths": {
+      // Aliasy
+      "@/*": ["src/*"]
     },
 
-    "include": ["src/**/*"],
+    // ── Interoperabilność ─────────────────────────────────────────
+    "esModuleInterop": true, // import express from 'express' zamiast * as express
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true, // import config from './config.json'
+    "forceConsistentCasingInFileNames": true,
 
-    "exclude": [
-        "node_modules",
-        "dist",
-        "coverage",
-        "**/*.test.ts",
-        "**/*.spec.ts"
-    ]
+    // ── Strict mode ───────────────────────────────────────────────
+    "strict": true, // włącza cały pakiet strict checks
+    "noImplicitAny": true, // brak ukrytych 'any'
+    "strictNullChecks": true, // null/undefined traktowane osobno
+    "strictFunctionTypes": true,
+    "noImplicitReturns": true, // każda ścieżka funkcji musi zwracać wartość
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true, // array[i] zwraca T | undefined
+
+    // ── Jakość kodu ───────────────────────────────────────────────
+    "noUnusedLocals": true, // błąd przy nieużywanych zmiennych lokalnych
+    "noUnusedParameters": true, // błąd przy nieużywanych parametrach
+
+    // ── Source maps (debugging) ───────────────────────────────────
+    "sourceMap": true, // mapy źródłowe do debugowania dist/
+    "declaration": true, // generuj pliki .d.ts
+    "declarationMap": true, // mapy do .d.ts
+
+    // ── Pozostałe ─────────────────────────────────────────────────
+    "skipLibCheck": true, // pomija sprawdzanie typów w node_modules
+    "experimentalDecorators": true, // dekoratory (np. jeśli używasz class-validator)
+    "emitDecoratorMetadata": true // metadata dla dekoratorów (reflect-metadata)
+  },
+
+  "include": ["src/**/*"],
+
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
 }
