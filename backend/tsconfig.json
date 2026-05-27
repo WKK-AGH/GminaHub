@@ -4,16 +4,14 @@
     // ── Target i moduły ───────────────────────────────────────────
     "target": "ES2022", // nowoczesny JS, Node 20 w pełni wspiera
     "module": "CommonJS", // Node.js używa CommonJS (nie ESM)
-    "moduleResolution": "node", // rozwiązywanie modułów po staremu (node_modules)
     "lib": ["ES2022"], // biblioteki wbudowane TS
 
     // ── Ścieżki ───────────────────────────────────────────────────
     "rootDir": "./src", // źródła tylko z /src
     "outDir": "./dist", // skompilowany JS trafia do /dist
-    "baseUrl": ".", // bazowy punkt dla paths
     "paths": {
       // Aliasy
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
 
     // ── Interoperabilność ─────────────────────────────────────────
