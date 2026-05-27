@@ -146,7 +146,12 @@
     "dbaeumer",
     "middlewares"
   ],
-  "cSpell.ignoreRegExpList": ["CStyleComment", "'[^']*'", "`[^`]*`"],
+  "cSpell.ignoreRegExpList": [
+    "CStyleComment",
+    "'[^']*'",
+    "`[^`]*`",
+    "\"[^\"]*\""
+  ],
   "cSpell.checkStrings": false,
   "cSpell.ignorePaths": [
     "**/*.log",
