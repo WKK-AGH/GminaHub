@@ -8,7 +8,7 @@
     "server": "node backend/server",
     "client": "npm run dev --prefix frontend",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "merge": "cmd /c .\\scripts\\merge.bat"
+    "merge": "node ./scripts/merge.js"
   },
   "devDependencies": {
     "concurrently": "^9.2.1"

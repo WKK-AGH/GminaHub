@@ -1,6 +1,6 @@
-const { spawnSync } = require('child_process');
-const os = require('os');
-const path = require('path');
+import { spawnSync } from 'child_process';
+import os from 'os';
+import path from 'path';
 
 function run(command, args, options = {}) {
     let result;
