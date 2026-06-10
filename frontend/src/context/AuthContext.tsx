@@ -1,19 +1,15 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import {
-  authApi, setAccessToken,
-  type Rola, type UserResponse, fullName, initials,
-} from '../api/api';
 
-// ─── TYPY ────────────────────────────────────────────────────────────────────
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { authApi, setAccessToken, type Rola, type UserResponse, fullName, initials } from '../api/api';
 
 export interface Uzytkownik {
   id: string;
   login?: string;
   firstName: string;
   lastName: string;
-  imieNazwisko: string;   // firstName + lastName — wygoda w UI
-  inicjaly: string;       // np. "JK"
-  rola: Rola;             // 'RADNY' | 'PRZEWODNICZACY' | 'ADMINISTRATOR'
+  imieNazwisko: string;
+  inicjaly: string;
+  rola: Rola;
 }
 
 interface AuthContextType {
@@ -23,8 +19,6 @@ interface AuthContextType {
   logout: () => Promise<void>;
   hasRole: (...role: Rola[]) => boolean;
 }
-
-// ─── HELPER ───────────────────────────────────────────────────────────────────
 
 function mapUser(user: UserResponse): Uzytkownik {
   return {
@@ -38,8 +32,6 @@ function mapUser(user: UserResponse): Uzytkownik {
   };
 }
 
-// ─── KONTEKST ─────────────────────────────────────────────────────────────────
-
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function useAuth() {
@@ -48,32 +40,17 @@ export function useAuth() {
   return ctx;
 }
 
-// ─── PROVIDER ────────────────────────────────────────────────────────────────
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [uzytkownik, setUzytkownik] = useState<Uzytkownik | null>(null);
-  const [isLoading,  setIsLoading]  = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Przy starcie — próba odświeżenia przez HttpOnly cookie
-  // /refresh zwraca tylko { success, accessToken } — bez danych usera
   useEffect(() => {
-    const tryRefresh = async () => {
-      try {
-        const res = await authApi.refresh();
-        if (res.success && res.accessToken) {
-          setAccessToken(res.accessToken);
-          // TODO: gdy backend doda GET /api/auth/me → pobierz i ustaw usera
-        }
-      } catch {
-        setAccessToken(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    tryRefresh();
+    authApi.refresh()
+      .then(res => { if (res.success) setAccessToken(res.accessToken); })
+      .catch(() => setAccessToken(null))
+      .finally(() => setIsLoading(false));
   }, []);
 
-  // Globalne wylogowanie (emitowane przez apiFetch przy 401)
   useEffect(() => {
     const handler = () => { setUzytkownik(null); setAccessToken(null); };
     window.addEventListener('auth:logout', handler);
