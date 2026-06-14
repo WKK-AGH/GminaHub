@@ -1,0 +1,160 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─────────────────────────────────────────────────────────────────
+// MODULE 1: UŻYTKOWNICY I UPRAWNIENIA
+// ─────────────────────────────────────────────────────────────────
+
+model Role {
+  id          String       @id @default(uuid())
+  name        String       @unique // np. 'RADNY', 'PRZEWODNICZACY', 'ADMINISTRATOR'
+  users       User[]
+  permissions Permission[]
+
+  @@map("roles")
+}
+
+model User {
+  id               String            @id @default(uuid())
+  login            String            @unique
+  password         String
+  firstName        String
+  lastName         String
+  roleId           String            @map("role_id")
+  role             Role              @relation(fields: [roleId], references: [id])
+  committeeMembers CommitteeMember[]
+  votes            Vote[]
+  systemLogs       SystemLog[]
+
+  @@map("users")
+}
+
+model Permission {
+  id     String @id @default(uuid())
+  name   String // np. 'CREATE_SESSION', 'CAST_VOTE'
+  roleId String @map("role_id")
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@map("permissions")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// MODULE 2: ORGANIZACJA (KOMISJE)
+// ─────────────────────────────────────────────────────────────────
+
+model Committee {
+  id       String            @id @default(uuid())
+  name     String            @unique // np. 'Komisja Rewizyjna'
+  members  CommitteeMember[]
+  sessions Session[]
+
+  @@map("committees")
+}
+
+model CommitteeMember {
+  id          String    @id @default(uuid())
+  committeeId String    @map("committee_id")
+  userId      String    @map("user_id")
+  committee   Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([committeeId, userId]) // Zabezpieczenie przed dublowaniem radnego w tej samej komisji
+  @@map("committee_members")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// MODULE 3: POSIEDZENIA I AGENDY
+// ─────────────────────────────────────────────────────────────────
+
+model Session {
+  id          String          @id @default(uuid())
+  title       String // np. 'LIV Sesja Rady Gminy'
+  status      String          @default("PLANNED") // PLANNED, ACTIVE, FINISHED
+  scheduledAt DateTime        @map("scheduled_at")
+  committeeId String?         @map("committee_id") // Opcjonalne, jeśli sesja jest ogólna rady, a nie konkretnej komisji
+  committee   Committee?      @relation(fields: [committeeId], references: [id])
+  agendaItems AgendaItem[]
+  summary     SessionSummary?
+
+  @@map("sessions")
+}
+
+model AgendaItem {
+  id        String     @id @default(uuid())
+  title     String // np. 'Rozpatrzenie projektu uchwały ws. budżetu'
+  order     Int // Kolejność punktu w agendzie
+  sessionId String     @map("session_id")
+  session   Session    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  documents Document[]
+  voting   Voting[]
+
+  @@map("agenda_items")
+}
+
+model Document {
+  id           String     @id @default(uuid())
+  title        String // Nazwa dokumentu / projektu uchwały
+  fileUrl      String     @map("file_url") // Ścieżka do pliku PDF na serwerze
+  agendaItemId String     @map("agenda_item_id")
+  agendaItem   AgendaItem @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
+
+  @@map("documents")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// MODULE 4: GŁOSOWANIA
+// ─────────────────────────────────────────────────────────────────
+
+model Voting {
+  id           String     @id @default(uuid())
+  title        String // Czego dotyczy głosowanie
+  status       String     @default("PENDING") // PENDING, ACTIVE, COMPLETED
+  agendaItemId String     @map("agenda_item_id")
+  agendaItem   AgendaItem @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
+  votes        Vote[]
+
+  @@map("voting")
+}
+
+model Vote {
+  id       String @id @default(uuid())
+  value    String // 'YES', 'NO', 'ABSTAIN' (Za, Przeciw, Wstrzymał się)
+  votingId String @map("voting_id")
+  userId   String @map("user_id")
+  voting   Voting @relation(fields: [votingId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([votingId, userId]) // Radny może zagłosować tylko raz w danym głosowaniu!
+  @@map("votes")
+}
+
+// ─────────────────────────────────────────────────────────────────
+// MODULE 5: PODSUMOWANIA I LOGI (AUDYT)
+// ─────────────────────────────────────────────────────────────────
+
+model SessionSummary {
+  id        String   @id @default(uuid())
+  content   String   @db.Text // Pełna treść protokołu z sesji
+  createdAt DateTime @default(now()) @map("created_at")
+  sessionId String   @unique @map("session_id") // Relacja 1-do-1 (jedna sesja ma jedno podsumowanie)
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("session_summaries")
+}
+
+model SystemLog {
+  id        String   @id @default(uuid())
+  action    String // np. 'LOGIN_SUCCESS', 'VOTE_CAST', 'SESSION_START'
+  details   String? // Dodatkowe szczegóły w formacie tekstowym lub JSON
+  createdAt DateTime @default(now()) @map("created_at")
+  userId    String?  @map("user_id") // Nullable, na wypadek gdyby log dotyczył akcji niezalogowanego użytkownika
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("system_logs")
+}
