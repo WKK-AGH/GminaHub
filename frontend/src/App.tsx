@@ -5,13 +5,13 @@ import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import Features from './components/Features';
 import Login from './components/Login';
-import PanelRadnego from './components/PanelRadnego';
-import SesjaDetail from './components/SesjaDetail';
-import LiveGlosowanie from './components/LiveGlosowanie';
-import ZarzadzanieKomisjami from './components/ZarzadzanieKomisjami';
-import StatystykiSesji from './components/StatystykiSesji';
-import TworzenieAgendy from './components/TworzenieAgendy';
-import TworzenieSesji from './components/Tworzeniesesji';
+import CouncilPanel from './components/CouncilPanel';
+import SessionDetail from './components/SessionDetail';
+import LiveVoting from './components/LiveVoting';
+import CommitteeManagement from './components/CommitteeManagement';
+import AgendaCreation from './components/AgendaCreation';
+import SessionCreation from './components/SessionCreation';
+import SessionStatistics from './components/SessionStatistics';
 
 export default function App() {
   return (
@@ -20,36 +20,36 @@ export default function App() {
         <Navbar />
         <main className="flex-grow">
           <Routes>
-            {/* Publiczne */}
-            <Route path="/" element={<><Hero /><Features /></>} />
+            {/* Public routes */}
+            <Route path="/"      element={<><Hero /><Features /></>} />
             <Route path="/login" element={<Login />} />
 
-            {/* Każdy zalogowany */}
-            <Route path="/panel" element={<ProtectedRoute><PanelRadnego /></ProtectedRoute>} />
-            <Route path="/sesja/:id" element={<ProtectedRoute><SesjaDetail /></ProtectedRoute>} />
-            <Route path="/statystyki/:id" element={<ProtectedRoute><StatystykiSesji /></ProtectedRoute>} />
+            {/* All logged-in users */}
+            <Route path="/panel"            element={<ProtectedRoute><CouncilPanel /></ProtectedRoute>} />
+            <Route path="/session/:id"      element={<ProtectedRoute><SessionDetail /></ProtectedRoute>} />
+            <Route path="/statistics/:id"   element={<ProtectedRoute><SessionStatistics /></ProtectedRoute>} />
 
             {/* RADNY, PRZEWODNICZACY, ADMINISTRATOR */}
             <Route path="/live/:sessionId" element={
               <ProtectedRoute roles={['RADNY', 'PRZEWODNICZACY', 'ADMINISTRATOR']}>
-                <LiveGlosowanie />
+                <LiveVoting />
               </ProtectedRoute>
             } />
 
-            {/* Tylko PRZEWODNICZACY i ADMINISTRATOR */}
-            <Route path="/sesja/nowa" element={
+            {/* PRZEWODNICZACY and ADMINISTRATOR only */}
+            <Route path="/session/new" element={
               <ProtectedRoute roles={['PRZEWODNICZACY', 'ADMINISTRATOR']}>
-                <TworzenieSesji />
+                <SessionCreation />
               </ProtectedRoute>
             } />
-            <Route path="/komisje" element={
+            <Route path="/committees" element={
               <ProtectedRoute roles={['PRZEWODNICZACY', 'ADMINISTRATOR']}>
-                <ZarzadzanieKomisjami />
+                <CommitteeManagement />
               </ProtectedRoute>
             } />
-            <Route path="/agenda/:sessionId/edytuj" element={
+            <Route path="/agenda/:sessionId/edit" element={
               <ProtectedRoute roles={['PRZEWODNICZACY', 'ADMINISTRATOR']}>
-                <TworzenieAgendy />
+                <AgendaCreation />
               </ProtectedRoute>
             } />
           </Routes>
@@ -61,30 +61,30 @@ export default function App() {
               <div>
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-1 h-5 bg-blue-600 rounded" />
-                  <span className="font-bold text-lg text-white">Urząd Gminy Nasza Gmina</span>
+                  <span className="font-bold text-lg text-white">Municipal Office</span>
                 </div>
                 <p className="text-sm text-slate-400 leading-relaxed font-light">
-                  Oficjalny publiczny serwis informacyjny Rady Gminy. Informacje zawarte w portalu stanowią informację publiczną.
+                  Official public information service of the Municipal Council. Information contained in the portal constitutes public information.
                 </p>
               </div>
               <div className="space-y-4">
-                <h4 className="font-semibold text-white text-sm">Informacje dla Obywateli</h4>
+                <h4 className="font-semibold text-white text-sm">Citizen Information</h4>
                 <ul className="space-y-2 text-sm font-light">
-                  <li>Deklaracja Dostępności Cyfrowej</li>
-                  <li>Polityka Prywatności i RODO</li>
+                  <li>Digital Accessibility Declaration</li>
+                  <li>Privacy Policy & GDPR</li>
                 </ul>
               </div>
               <div className="space-y-4">
-                <h4 className="font-semibold text-white text-sm">Urząd Gminy</h4>
+                <h4 className="font-semibold text-white text-sm">Municipal Office</h4>
                 <ul className="space-y-1.5 text-sm font-light">
-                  <li>ul. Samorządowa 1, 00-000 Gmina</li>
+                  <li>1 Council Street, 00-000 Municipality</li>
                   <li className="pt-2 text-slate-300 font-normal">tel. +48 12 345 67 89</li>
-                  <li>e-mail: sekretariat@urzadgminy.pl</li>
+                  <li>e-mail: office@municipality.pl</li>
                 </ul>
               </div>
             </div>
             <div className="border-t border-slate-800 pt-8 text-center text-xs text-slate-500">
-              <p>&copy; 2026 Rada Gminy Nasza Gmina. Wszelkie prawa zastrzeżone.</p>
+              <p>&copy; 2026 Municipal Council. All rights reserved.</p>
             </div>
           </div>
         </footer>

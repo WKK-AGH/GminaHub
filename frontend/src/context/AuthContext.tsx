@@ -1,48 +1,56 @@
-
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
-import { authApi, setAccessToken, type Rola, type UserResponse, fullName, initials } from '../api/api';
+import { authApi, setAccessToken, type UserRole, type UserResponse, getFullName, getInitials } from '../api/api';
 
-export interface Uzytkownik {
+// ─── TYPES ────────────────────────────────────────────────────────────────────
+
+export interface CurrentUser {
   id: string;
   login?: string;
   firstName: string;
   lastName: string;
-  imieNazwisko: string;
-  inicjaly: string;
-  rola: Rola;
+  fullName: string;
+  initials: string;
+  role: UserRole;
 }
 
 interface AuthContextType {
-  uzytkownik: Uzytkownik | null;
+  currentUser: CurrentUser | null;
   isLoading: boolean;
   login: (login: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  hasRole: (...role: Rola[]) => boolean;
+  hasRole: (...roles: UserRole[]) => boolean;
 }
 
-function mapUser(user: UserResponse): Uzytkownik {
+// ─── HELPER ───────────────────────────────────────────────────────────────────
+
+function mapUser(user: UserResponse): CurrentUser {
   return {
-    id:           user.id,
-    login:        user.login,
-    firstName:    user.firstName,
-    lastName:     user.lastName,
-    imieNazwisko: fullName(user),
-    inicjaly:     initials(user),
-    rola:         user.role,
+    id:       user.id,
+    login:    user.login,
+    firstName:user.firstName,
+    lastName: user.lastName,
+    fullName: getFullName(user),
+    initials: getInitials(user),
+    role:     user.role,
   };
 }
+
+// ─── CONTEXT ──────────────────────────────────────────────────────────────────
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth musi być użyty wewnątrz AuthProvider');
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
 }
 
+// ─── PROVIDER ────────────────────────────────────────────────────────────────
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [uzytkownik, setUzytkownik] = useState<Uzytkownik | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [isLoading,   setIsLoading]   = useState(true);
+
 
   useEffect(() => {
     authApi.refresh()
@@ -51,33 +59,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setIsLoading(false));
   }, []);
 
+ 
   useEffect(() => {
-    const handler = () => { setUzytkownik(null); setAccessToken(null); };
+    const handler = () => { setCurrentUser(null); setAccessToken(null); };
     window.addEventListener('auth:logout', handler);
     return () => window.removeEventListener('auth:logout', handler);
   }, []);
 
   const login = useCallback(async (loginStr: string, password: string) => {
     const res = await authApi.login({ login: loginStr, password });
-    if (!res.success) throw new Error('Logowanie nie powiodło się');
+    if (!res.success) throw new Error('Login failed');
     setAccessToken(res.accessToken);
-    setUzytkownik(mapUser(res.user));
+    setCurrentUser(mapUser(res.user));
   }, []);
 
   const logout = useCallback(async () => {
     try { await authApi.logout(); } finally {
       setAccessToken(null);
-      setUzytkownik(null);
+      setCurrentUser(null);
     }
   }, []);
 
-  const hasRole = useCallback((...roles: Rola[]) => {
-    if (!uzytkownik) return false;
-    return roles.includes(uzytkownik.rola);
-  }, [uzytkownik]);
+  const hasRole = useCallback((...roles: UserRole[]) => {
+    if (!currentUser) return false;
+    return roles.includes(currentUser.role);
+  }, [currentUser]);
 
   return (
-    <AuthContext.Provider value={{ uzytkownik, isLoading, login, logout, hasRole }}>
+    <AuthContext.Provider value={{ currentUser, isLoading, login, logout, hasRole }}>
       {children}
     </AuthContext.Provider>
   );
