@@ -1,0 +1,108 @@
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { ROLE_LABEL } from '../api/api';
+
+export default function Navbar() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location   = useLocation();
+  const { currentUser, logout } = useAuth();
+
+  const isPanelRoute = ['/panel', '/session', '/live', '/committees', '/statistics', '/agenda'].some(p =>
+    location.pathname.startsWith(p)
+  );
+
+  return (
+    <nav className="bg-slate-950 text-white shadow-lg sticky top-0 z-50 border-b border-slate-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16 items-center">
+
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-6 bg-blue-600 rounded" />
+            <Link to="/" className="text-base font-bold tracking-tight text-slate-50">MUNICIPAL COUNCIL</Link>
+          </div>
+
+          <div className="hidden md:flex items-center gap-6">
+            {!isPanelRoute && (
+              <>
+                <a href="/#votings"   className="text-sm font-medium text-slate-300 hover:text-white transition">Voting Registry</a>
+                <a href="/#calendar"  className="text-sm font-medium text-slate-300 hover:text-white transition">Session Dates</a>
+                <a href="/#recordings"className="text-sm font-medium text-slate-300 hover:text-white transition">Archive</a>
+              </>
+            )}
+
+            {isPanelRoute && currentUser && (
+              <>
+                <Link to="/panel"
+                  className={`text-sm font-medium transition ${location.pathname === '/panel' ? 'text-white' : 'text-slate-300 hover:text-white'}`}>
+                  Dashboard
+                </Link>
+                {(currentUser.role === 'PRZEWODNICZACY' || currentUser.role === 'ADMINISTRATOR') && (
+                  <Link to="/committees"
+                    className={`text-sm font-medium transition ${location.pathname === '/committees' ? 'text-white' : 'text-slate-300 hover:text-white'}`}>
+                    Committees
+                  </Link>
+                )}
+                <span className="text-xs text-slate-500 border border-slate-700 px-2 py-1 rounded">
+                  {ROLE_LABEL[currentUser.role]}
+                </span>
+              </>
+            )}
+
+            {currentUser ? (
+              isPanelRoute ? (
+                <button onClick={logout} className="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white text-sm px-4 py-2 rounded font-semibold transition">
+                  Log out
+                </button>
+              ) : (
+                <Link to="/panel" className="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white text-sm px-4 py-2 rounded font-semibold transition">
+                  Council Panel
+                </Link>
+              )
+            ) : (
+              <Link to="/login" className="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white text-sm px-4 py-2 rounded font-semibold transition">
+                Council Panel
+              </Link>
+            )}
+          </div>
+
+          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden p-2 rounded hover:bg-slate-800 transition">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {isMenuOpen
+                ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              }
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {isMenuOpen && (
+        <div className="md:hidden pb-4 border-t border-slate-800 px-4 pt-2 space-y-1 bg-slate-950">
+          {!isPanelRoute ? (
+            <>
+              <a href="/#votings"    className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Voting Registry</a>
+              <a href="/#calendar"   className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Session Dates</a>
+              <a href="/#recordings" className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Archive</a>
+              <Link to={currentUser ? '/panel' : '/login'} onClick={() => setIsMenuOpen(false)}
+                className="block w-full mt-2 text-center bg-slate-800 text-white text-sm py-2 rounded font-semibold border border-slate-700">
+                {currentUser ? 'Council Panel' : 'Log in'}
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/panel"       onClick={() => setIsMenuOpen(false)} className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Dashboard</Link>
+              {currentUser && (currentUser.role === 'PRZEWODNICZACY' || currentUser.role === 'ADMINISTRATOR') && (
+                <Link to="/committees" onClick={() => setIsMenuOpen(false)} className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Committees</Link>
+              )}
+              <button onClick={() => { logout(); setIsMenuOpen(false); }}
+                className="block w-full mt-2 text-center bg-slate-800 text-white text-sm py-2 rounded font-semibold border border-slate-700">
+                Log out
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </nav>
+  );
+}
