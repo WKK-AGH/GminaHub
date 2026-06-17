@@ -38,7 +38,7 @@ function checkCleanWorkingTree() {
     }
 }
 
-const defaultTargets = ['backend', 'database', 'feature', 'frontend', 'main'];
+const defaultTargets = ['backend', 'database', 'feature', 'frontend'];
 const args = process.argv.slice(2);
 let targets = defaultTargets;
 let dryRun = false;
