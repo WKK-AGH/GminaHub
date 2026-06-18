@@ -1,21 +1,23 @@
 import { Router } from 'express';
+import { login, logout, refresh, register } from './auth.controller';
+import { validateBody } from '@/middleware/validate';
+import { loginSchema, registerSchema } from './auth.validation';
+import { authenticateJWT, authorizeRoles } from '@/middleware/auth.middleware';
 
 const router = Router();
 
-router.post('/login', (_req, res) => {
-  res.json({ message: 'Tutaj będzie logowanie' });
-});
+router.post('/login', validateBody(loginSchema), login);
 
-router.post('/register', (_req, res) => {
-  res.json({ message: 'Tutaj będzie rejestracja radnych przez admina' });
-});
+router.post('/logout', logout);
 
-router.post('/refresh', (_req, res) => {
-  res.json({ message: 'Tutaj będzie odświeżanie tokenu JWT' });
-});
+router.post('/refresh', refresh);
 
-router.post('/logout', (_req, res) => {
-  res.json({ message: 'Tutaj będzie wylogowanie (czyszczenie cookie)' });
-});
+router.post(
+  '/register',
+  authenticateJWT,
+  authorizeRoles('ADMINISTRATOR'),
+  validateBody(registerSchema),
+  register
+);
 
 export default router;

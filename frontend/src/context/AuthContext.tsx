@@ -1,15 +1,10 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { authApi, setAccessToken, type UserRole, type UserResponse, getFullName, getInitials } from '../api/api';
 
-// ─── TYPES ────────────────────────────────────────────────────────────────────
-
 export interface CurrentUser {
-  id: string;
-  login?: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
-  initials: string;
+  id: string; login?: string;
+  firstName: string; lastName: string;
+  fullName: string; initials: string;
   role: UserRole;
 }
 
@@ -21,45 +16,29 @@ interface AuthContextType {
   hasRole: (...roles: UserRole[]) => boolean;
 }
 
-// ─── HELPER ───────────────────────────────────────────────────────────────────
-
-function mapUser(user: UserResponse): CurrentUser {
-  return {
-    id:       user.id,
-    login:    user.login,
-    firstName:user.firstName,
-    lastName: user.lastName,
-    fullName: getFullName(user),
-    initials: getInitials(user),
-    role:     user.role,
-  };
+function mapujUzytkownika(user: UserResponse): CurrentUser {
+  return { id: user.id, login: user.login, firstName: user.firstName, lastName: user.lastName, fullName: getFullName(user), initials: getInitials(user), role: user.role };
 }
 
-// ─── CONTEXT ──────────────────────────────────────────────────────────────────
+// Mock użytkownicy — gdy backend niedostępny
+const MOCK_UZYTKOWNICY: Record<string, { haslo: string; user: UserResponse }> = {
+  'admin':          { haslo: 'Admin123!',  user: { id: '1', firstName: 'Główny',    lastName: 'Administrator', role: 'ADMINISTRATOR',  login: 'admin'          } },
+  'radny':          { haslo: 'Radny123!',  user: { id: '2', firstName: 'Jan',       lastName: 'Kowalski',      role: 'RADNY',          login: 'radny'          } },
+  'przewodniczacy': { haslo: 'Przew123!',  user: { id: '3', firstName: 'Anna',      lastName: 'Wiśniewska',    role: 'PRZEWODNICZACY', login: 'przewodniczacy' } },
+};
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  if (!ctx) throw new Error('useAuth musi być użyty wewnątrz AuthProvider');
   return ctx;
 }
 
-// ─── PROVIDER ────────────────────────────────────────────────────────────────
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [isLoading,   setIsLoading]   = useState(true);
+  const [isLoading,   setIsLoading]   = useState(false); // false — mock nie potrzebuje ładowania
 
-
-  useEffect(() => {
-    authApi.refresh()
-      .then(res => { if (res.success) setAccessToken(res.accessToken); })
-      .catch(() => setAccessToken(null))
-      .finally(() => setIsLoading(false));
-  }, []);
-
- 
   useEffect(() => {
     const handler = () => { setCurrentUser(null); setAccessToken(null); };
     window.addEventListener('auth:logout', handler);
@@ -67,17 +46,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (loginStr: string, password: string) => {
-    const res = await authApi.login({ login: loginStr, password });
-    if (!res.success) throw new Error('Login failed');
-    setAccessToken(res.accessToken);
-    setCurrentUser(mapUser(res.user));
+    // Najpierw próbuj backend
+    try {
+      const res = await authApi.login({ login: loginStr, password });
+      if (res.success) { setAccessToken(res.accessToken); setCurrentUser(mapujUzytkownika(res.user)); return; }
+    } catch { /* backend niedostępny — użyj mocka */ }
+
+    // Mock fallback
+    const mock = MOCK_UZYTKOWNICY[loginStr];
+    if (mock && mock.haslo === password) { setCurrentUser(mapujUzytkownika(mock.user)); return; }
+
+    throw new Error('Nieprawidłowy login lub hasło');
   }, []);
 
   const logout = useCallback(async () => {
-    try { await authApi.logout(); } finally {
-      setAccessToken(null);
-      setCurrentUser(null);
-    }
+    try { await authApi.logout(); } catch { /* ignoruj */ }
+    setAccessToken(null); setCurrentUser(null);
   }, []);
 
   const hasRole = useCallback((...roles: UserRole[]) => {

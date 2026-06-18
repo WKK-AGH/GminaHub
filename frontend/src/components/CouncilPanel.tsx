@@ -8,98 +8,80 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { sessionsApi, ROLE_LABEL, type Session } from '../api/api';
 
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+function formatujDate(iso: string) {
+  return new Date(iso).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+function formatujCzas(iso: string) {
+  return new Date(iso).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
 }
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-}
-
-const SESSION_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  PLANNED:  { label: 'Upcoming',  className: 'bg-amber-50  text-amber-700  border-amber-200' },
-  ACTIVE:   { label: 'Active',    className: 'bg-blue-50   text-blue-700   border-blue-200'  },
-  FINISHED: { label: 'Finished',  className: 'bg-slate-100 text-slate-600  border-slate-200' },
+const STATUS_SESJI: Record<string, { etykieta: string; klasa: string }> = {
+  PLANNED:  { etykieta: 'Nadchodząca', klasa: 'bg-amber-50  text-amber-700  border-amber-200' },
+  ACTIVE:   { etykieta: 'W trakcie',   klasa: 'bg-blue-50   text-blue-700   border-blue-200'  },
+  FINISHED: { etykieta: 'Zakończona',  klasa: 'bg-slate-100 text-slate-600  border-slate-200' },
 };
 
-// ─── SESSION CARD ─────────────────────────────────────────────────────────────
-
-function SessionCard({ session }: { session: Session }) {
-  const config   = SESSION_STATUS_CONFIG[session.status] ?? SESSION_STATUS_CONFIG.PLANNED;
-  const itemCount = session.agendaItems?.length ?? 0;
-
+function KartaSesji({ sesja }: { sesja: Session }) {
+  const cfg = STATUS_SESJI[sesja.status] ?? STATUS_SESJI.PLANNED;
+  const liczbaPunktow = sesja.agendaItems?.length ?? 0;
   return (
-    <div className={`bg-white border rounded-xl p-5 shadow-sm transition-all hover:border-slate-300 ${
-      session.status === 'ACTIVE' ? 'border-blue-200 ring-1 ring-blue-100' : 'border-slate-200'
-    }`}>
+    <div className={`bg-white border rounded-xl p-5 shadow-sm transition-all hover:border-slate-300 ${sesja.status === 'ACTIVE' ? 'border-blue-200 ring-1 ring-blue-100' : 'border-slate-200'}`}>
       <div className="flex items-start justify-between gap-3 mb-3">
-        <p className="font-bold text-slate-900 text-sm leading-snug">{session.title}</p>
-        <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 border ${config.className}`}>
-          {config.label}
-        </span>
+        <p className="font-bold text-slate-900 text-sm leading-snug">{sesja.title}</p>
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-full flex-shrink-0 border ${cfg.klasa}`}>{cfg.etykieta}</span>
       </div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-slate-500">
-        <span className="flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" />{formatDate(session.scheduledAt)}</span>
-        <span className="flex items-center gap-1.5"><Clock        className="w-3.5 h-3.5" />{formatTime(session.scheduledAt)}</span>
-        {itemCount > 0 && (
-          <span className="flex items-center gap-1.5 col-span-2">
-            <FileText className="w-3.5 h-3.5" />{itemCount} agenda items
-          </span>
-        )}
+        <span className="flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" />{formatujDate(sesja.scheduledAt)}</span>
+        <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" />{formatujCzas(sesja.scheduledAt)}</span>
+        {liczbaPunktow > 0 && <span className="flex items-center gap-1.5 col-span-2"><FileText className="w-3.5 h-3.5" />{liczbaPunktow} pkt. agendy</span>}
       </div>
       <div className="flex gap-2 mt-3">
-        {session.status === 'ACTIVE' && (
-          <Link to={`/live/${session.id}`} className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-            <Radio className="w-3.5 h-3.5" /> Join voting
+        {sesja.status === 'ACTIVE' && (
+          <Link to={`/live/${sesja.id}`} className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+            <Radio className="w-3.5 h-3.5" /> Dołącz do głosowania
           </Link>
         )}
-        <Link to={`/session/${session.id}`} className="text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center gap-1 ml-auto">
-          Details <ChevronRight className="w-3.5 h-3.5" />
+        <Link to={`/sesja/${sesja.id}`} className="text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center gap-1 ml-auto">
+          Szczegóły <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
     </div>
   );
 }
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
-
-type ActiveTab = 'dashboard' | 'sessions' | 'notifications';
+type AktywnaZakladka = 'dashboard' | 'sesje' | 'powiadomienia';
 
 export default function CouncilPanel() {
   const { currentUser, logout, hasRole } = useAuth();
-  const [activeTab,  setActiveTab]  = useState<ActiveTab>('dashboard');
-  const [sessions,   setSessions]   = useState<Session[]>([]);
-  const [isLoading,  setIsLoading]  = useState(true);
-  const [error,      setError]      = useState<string | null>(null);
+  const [aktywnaZakladka, setAktywnaZakladka] = useState<AktywnaZakladka>('dashboard');
+  const [sesje,     setSesje]     = useState<Session[]>([]);
+  const [ladowanie, setLadowanie] = useState(true);
+  const [blad,      setBlad]      = useState<string | null>(null);
 
-  const canManage = hasRole('PRZEWODNICZACY', 'ADMINISTRATOR');
+  const mozeZarzadzac = hasRole('PRZEWODNICZACY', 'ADMINISTRATOR');
 
-  // Fetch sessions from API: GET /api/sessions
   useEffect(() => {
     sessionsApi.list()
-      .then(data => setSessions(data))
-      .catch(err  => setError(err.message ?? 'Failed to load sessions'))
-      .finally(()  => setIsLoading(false));
+      .then(data => setSesje(data))
+      .catch(err  => setBlad(err.message ?? 'Błąd pobierania sesji'))
+      .finally(()  => setLadowanie(false));
   }, []);
 
   if (!currentUser) return null;
 
-  const activeSessions   = sessions.filter(s => s.status === 'ACTIVE');
-  const upcomingSessions = sessions.filter(s => s.status === 'PLANNED');
-  const finishedSessions = sessions.filter(s => s.status === 'FINISHED');
+  const aktywne     = sesje.filter(s => s.status === 'ACTIVE');
+  const nadchodzace = sesje.filter(s => s.status === 'PLANNED');
+  const zakonczone  = sesje.filter(s => s.status === 'FINISHED');
 
-  const tabs = [
-    { id: 'dashboard'     as ActiveTab, label: 'Dashboard',     icon: <LayoutDashboard className="w-4 h-4" /> },
-    { id: 'sessions'      as ActiveTab, label: 'Sessions',       icon: <CalendarDays    className="w-4 h-4" /> },
-    { id: 'notifications' as ActiveTab, label: 'Notifications',  icon: <Bell            className="w-4 h-4" /> },
+  const zakladki = [
+    { id: 'dashboard'     as AktywnaZakladka, etykieta: 'Dashboard',     ikona: <LayoutDashboard className="w-4 h-4" /> },
+    { id: 'sesje'         as AktywnaZakladka, etykieta: 'Sesje',          ikona: <CalendarDays    className="w-4 h-4" /> },
+    { id: 'powiadomienia' as AktywnaZakladka, etykieta: 'Powiadomienia',  ikona: <Bell            className="w-4 h-4" /> },
   ];
 
   return (
     <div className="min-h-[80vh] bg-slate-50">
-
-      {/* Header */}
+      {/* Nagłówek */}
       <div className="bg-white border-b border-slate-200 px-4 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -112,20 +94,18 @@ export default function CouncilPanel() {
             </div>
           </div>
           <button onClick={logout} className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 border border-slate-200 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition font-medium">
-            <LogOut className="w-4 h-4" /><span className="hidden sm:inline">Log out</span>
+            <LogOut className="w-4 h-4" /><span className="hidden sm:inline">Wyloguj</span>
           </button>
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Zakładki */}
       <div className="bg-white border-b border-slate-200 px-4">
         <div className="max-w-7xl mx-auto flex gap-1 overflow-x-auto">
-          {tabs.map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3.5 text-sm font-semibold border-b-2 transition whitespace-nowrap ${
-                activeTab === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-900'
-              }`}>
-              {tab.icon}{tab.label}
+          {zakladki.map(z => (
+            <button key={z.id} onClick={() => setAktywnaZakladka(z.id)}
+              className={`flex items-center gap-2 px-4 py-3.5 text-sm font-semibold border-b-2 transition whitespace-nowrap ${aktywnaZakladka === z.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-900'}`}>
+              {z.ikona}{z.etykieta}
             </button>
           ))}
         </div>
@@ -134,92 +114,76 @@ export default function CouncilPanel() {
       <div className="max-w-7xl mx-auto px-4 py-8">
 
         {/* DASHBOARD */}
-        {activeTab === 'dashboard' && (
+        {aktywnaZakladka === 'dashboard' && (
           <div className="space-y-8">
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
-                <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-                  Welcome, {currentUser.firstName}
-                </h1>
-                <p className="text-slate-500 text-sm mt-1">Panel · e-Session: Digital Municipal Council</p>
+                <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Witaj, {currentUser.firstName}</h1>
+                <p className="text-slate-500 text-sm mt-1">Panel · e-Sesja: Cyfrowa Rada Gminy</p>
               </div>
-              {canManage && (
-                <Link to="/session/new"
-                  className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition shadow-sm">
-                  <Plus className="w-4 h-4" /> New session
+              {mozeZarzadzac && (
+                <Link to="/sesja/nowa" className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition shadow-sm">
+                  <Plus className="w-4 h-4" /> Nowa sesja
                 </Link>
               )}
             </div>
 
-            {/* Stats */}
+            {/* Statystyki */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { icon: <CalendarDays className="w-5 h-5" />, label: 'Total sessions',  value: sessions.length,        bg: 'bg-blue-50',    tc: 'text-blue-600'    },
-                { icon: <Radio        className="w-5 h-5" />, label: 'Active',          value: activeSessions.length,  bg: 'bg-emerald-50', tc: 'text-emerald-600' },
-                { icon: <Clock        className="w-5 h-5" />, label: 'Upcoming',        value: upcomingSessions.length,bg: 'bg-amber-50',   tc: 'text-amber-600'   },
-                { icon: <TrendingUp   className="w-5 h-5" />, label: 'Finished',        value: finishedSessions.length,bg: 'bg-slate-100',  tc: 'text-slate-600'   },
-              ].map((stat, i) => (
+                { ikona: <CalendarDays className="w-5 h-5" />, etykieta: 'Sesji łącznie',  wartosc: sesje.length,        bg: 'bg-blue-50',    tc: 'text-blue-600'    },
+                { ikona: <Radio        className="w-5 h-5" />, etykieta: 'Aktywne',        wartosc: aktywne.length,      bg: 'bg-emerald-50', tc: 'text-emerald-600' },
+                { ikona: <Clock        className="w-5 h-5" />, etykieta: 'Nadchodzące',    wartosc: nadchodzace.length,  bg: 'bg-amber-50',   tc: 'text-amber-600'   },
+                { ikona: <TrendingUp   className="w-5 h-5" />, etykieta: 'Zakończone',     wartosc: zakonczone.length,   bg: 'bg-slate-100',  tc: 'text-slate-600'   },
+              ].map((s, i) => (
                 <div key={i} className="bg-white border border-slate-200 rounded-xl p-5 flex items-start gap-4 shadow-sm">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${stat.bg} ${stat.tc}`}>
-                    {stat.icon}
-                  </div>
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${s.bg} ${s.tc}`}>{s.ikona}</div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-0.5">{stat.label}</p>
-                    <p className="text-2xl font-extrabold text-slate-900 leading-none">{isLoading ? '–' : stat.value}</p>
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-0.5">{s.etykieta}</p>
+                    <p className="text-2xl font-extrabold text-slate-900 leading-none">{ladowanie ? '–' : s.wartosc}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            {error && (
+            {blad && (
               <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
-                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />{error}
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />{blad}
               </div>
             )}
 
-            {isLoading && (
+            {ladowanie && (
               <div className="flex items-center justify-center py-12 text-slate-400">
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                <span className="text-sm">Loading sessions...</span>
+                <Loader2 className="w-5 h-5 animate-spin mr-2" /><span className="text-sm">Pobieranie sesji...</span>
               </div>
             )}
 
-            {activeSessions.length > 0 && (
+            {aktywne.length > 0 && (
               <div>
-                <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <Radio className="w-4 h-4 text-blue-600" /> Session in progress
-                </h2>
-                <div className="space-y-3">{activeSessions.map(s => <SessionCard key={s.id} session={s} />)}</div>
+                <h2 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2"><Radio className="w-4 h-4 text-blue-600" /> Sesja w toku</h2>
+                <div className="space-y-3">{aktywne.map(s => <KartaSesji key={s.id} sesja={s} />)}</div>
               </div>
             )}
 
-            {upcomingSessions.length > 0 && (
+            {nadchodzace.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                    <CalendarDays className="w-4 h-4 text-blue-600" /> Upcoming sessions
-                  </h2>
-                  <button onClick={() => setActiveTab('sessions')} className="text-xs text-blue-600 font-semibold hover:underline">
-                    View all →
-                  </button>
+                  <h2 className="text-base font-bold text-slate-900 flex items-center gap-2"><CalendarDays className="w-4 h-4 text-blue-600" /> Nadchodzące sesje</h2>
+                  <button onClick={() => setAktywnaZakladka('sesje')} className="text-xs text-blue-600 font-semibold hover:underline">Zobacz wszystkie →</button>
                 </div>
-                <div className="space-y-3">{upcomingSessions.slice(0, 3).map(s => <SessionCard key={s.id} session={s} />)}</div>
+                <div className="space-y-3">{nadchodzace.slice(0, 3).map(s => <KartaSesji key={s.id} sesja={s} />)}</div>
               </div>
             )}
 
-            {canManage && (
+            {mozeZarzadzac && (
               <div className="bg-white border border-slate-200 rounded-xl p-5">
-                <h2 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-blue-600" /> Management
-                </h2>
+                <h2 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2"><Users className="w-4 h-4 text-blue-600" /> Zarządzanie</h2>
                 <div className="flex flex-wrap gap-3">
-                  <Link to="/session/new"
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition">
-                    <Plus className="w-4 h-4" /> New session
+                  <Link to="/sesja/nowa" className="inline-flex items-center gap-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition">
+                    <Plus className="w-4 h-4" /> Nowa sesja
                   </Link>
-                  <Link to="/committees"
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-4 py-2 rounded-lg transition">
-                    <Users className="w-4 h-4" /> Committees & members
+                  <Link to="/komisje" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-4 py-2 rounded-lg transition">
+                    <Users className="w-4 h-4" /> Komisje
                   </Link>
                 </div>
               </div>
@@ -227,41 +191,40 @@ export default function CouncilPanel() {
           </div>
         )}
 
-        {/* SESSIONS */}
-        {activeTab === 'sessions' && (
+        {/* SESJE */}
+        {aktywnaZakladka === 'sesje' && (
           <div>
             <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">All sessions</h1>
-              {canManage && (
-                <Link to="/session/new"
-                  className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition">
-                  <Plus className="w-4 h-4" /> New session
+              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Wszystkie sesje</h1>
+              {mozeZarzadzac && (
+                <Link to="/sesja/nowa" className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold px-4 py-2.5 rounded-xl text-sm transition">
+                  <Plus className="w-4 h-4" /> Nowa sesja
                 </Link>
               )}
             </div>
-            {isLoading && <div className="flex items-center gap-2 text-slate-400"><Loader2 className="w-4 h-4 animate-spin" /> Loading...</div>}
-            {error    && <div className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl p-4">{error}</div>}
-            {!isLoading && !error && sessions.length === 0 && (
+            {ladowanie && <div className="flex items-center gap-2 text-slate-400"><Loader2 className="w-4 h-4 animate-spin" /> Ładowanie...</div>}
+            {blad && <div className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-xl p-4">{blad}</div>}
+            {!ladowanie && !blad && sesje.length === 0 && (
               <div className="text-center py-16 text-slate-400">
                 <CalendarDays className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p className="font-semibold">No sessions in the system</p>
-                {canManage && (
-                  <Link to="/session/new" className="inline-flex items-center gap-2 mt-4 text-sm font-bold text-blue-600 hover:underline">
-                    <Plus className="w-4 h-4" /> Create first session
+                <p className="font-semibold">Brak sesji w systemie</p>
+                {mozeZarzadzac && (
+                  <Link to="/sesja/nowa" className="inline-flex items-center gap-2 mt-4 text-sm font-bold text-blue-600 hover:underline">
+                    <Plus className="w-4 h-4" /> Utwórz pierwszą sesję
                   </Link>
                 )}
               </div>
             )}
-            <div className="space-y-3">{sessions.map(s => <SessionCard key={s.id} session={s} />)}</div>
+            <div className="space-y-3">{sesje.map(s => <KartaSesji key={s.id} sesja={s} />)}</div>
           </div>
         )}
 
-        {/* NOTIFICATIONS */}
-        {activeTab === 'notifications' && (
+        {/* POWIADOMIENIA */}
+        {aktywnaZakladka === 'powiadomienia' && (
           <div className="text-center py-16 text-slate-400">
             <Bell className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="font-semibold">No new notifications</p>
-            <p className="text-sm mt-1">Notifications will be available after WebSocket implementation</p>
+            <p className="font-semibold">Brak nowych powiadomień</p>
+            <p className="text-sm mt-1">Powiadomienia pojawią się tutaj po wdrożeniu WebSocket</p>
           </div>
         )}
       </div>

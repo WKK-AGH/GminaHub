@@ -17,7 +17,7 @@ export default function ProtectedRoute({ children, roles }: Props) {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="flex items-center gap-3 text-slate-500">
           <Loader2 className="w-5 h-5 animate-spin" />
-          <span className="text-sm font-medium">Verifying session...</span>
+          <span className="text-sm font-medium">Weryfikacja sesji...</span>
         </div>
       </div>
     );
@@ -34,15 +34,15 @@ export default function ProtectedRoute({ children, roles }: Props) {
           <div className="w-14 h-14 rounded-full bg-red-50 border border-red-100 flex items-center justify-center mx-auto mb-5">
             <Shield className="w-7 h-7 text-red-500" />
           </div>
-          <h2 className="text-xl font-extrabold text-slate-900 mb-2">Access Denied</h2>
+          <h2 className="text-xl font-extrabold text-slate-900 mb-2">Brak dostępu</h2>
           <p className="text-sm text-slate-500 mb-1">
-            Required role: <span className="font-bold text-slate-700">{roles.map(r => ROLE_LABEL[r]).join(' or ')}</span>
+            Wymagana rola: <span className="font-bold text-slate-700">{roles.map(r => ROLE_LABEL[r]).join(' lub ')}</span>
           </p>
           <p className="text-sm text-slate-400 mb-6">
-            Your role: <span className="font-semibold text-slate-600">{ROLE_LABEL[currentUser.role]}</span>
+            Twoja rola: <span className="font-semibold text-slate-600">{ROLE_LABEL[currentUser.role]}</span>
           </p>
           <a href="/panel" className="inline-block bg-slate-900 text-white font-bold text-sm px-6 py-2.5 rounded-xl hover:bg-slate-800 transition">
-            Back to panel
+            Wróć do panelu
           </a>
         </div>
       </div>

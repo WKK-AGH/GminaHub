@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -44,24 +45,24 @@ const COLOR_CONFIG: Record<string, { dot: string; bg: string; text: string; bord
 };
 
 const MEMBER_ROLE_CONFIG: Record<MemberRole, { label: string; className: string; icon: React.ReactNode; description: string }> = {
-  chairman:  { label: 'Chairman',  className: 'bg-blue-50   text-blue-700   border-blue-200',  icon: <Crown  className="w-3 h-3" />, description: 'Manages agenda and opens votings.'  },
-  secretary: { label: 'Secretary', className: 'bg-amber-50  text-amber-700  border-amber-200', icon: <Edit2  className="w-3 h-3" />, description: 'Edits documents and attachments.'    },
-  member:    { label: 'Member',    className: 'bg-slate-100 text-slate-600  border-slate-200', icon: <Users  className="w-3 h-3" />, description: 'Participates in votings.'           },
+  chairman:  { label: 'Przewodniczący', className: 'bg-blue-50   text-blue-700   border-blue-200',  icon: <Crown  className="w-3 h-3" />, description: 'Zarządza porządkiem obrad i otwiera głosowania.'  },
+  secretary: { label: 'Sekretarz', className: 'bg-amber-50  text-amber-700  border-amber-200', icon: <Edit2  className="w-3 h-3" />, description: 'Edytuje dokumenty i załączniki.'    },
+  member:    { label: 'Członek',    className: 'bg-slate-100 text-slate-600  border-slate-200', icon: <Users  className="w-3 h-3" />, description: 'Uczestniczy w głosowaniach.'           },
 };
 
 const ASSIGNABLE_ROLES: MemberRole[] = ['chairman', 'secretary', 'member'];
 
 const PERMISSIONS_MATRIX = [
-  { action: 'Manage user accounts',         admin: true,  chair: false, sec: false, mem: false },
-  { action: 'Create/delete committees',     admin: true,  chair: false, sec: false, mem: false },
-  { action: 'Manage committee members',     admin: true,  chair: true,  sec: false, mem: false },
-  { action: 'Create and edit agenda',       admin: true,  chair: true,  sec: true,  mem: false },
-  { action: 'Open and close votings',       admin: true,  chair: true,  sec: false, mem: false },
-  { action: 'Participate in votings',       admin: true,  chair: true,  sec: false, mem: true  },
-  { action: 'Upload PDF attachments',       admin: true,  chair: true,  sec: true,  mem: false },
-  { action: 'View agenda & documents',      admin: true,  chair: true,  sec: true,  mem: true  },
-  { action: 'Export session summaries',     admin: true,  chair: true,  sec: true,  mem: false },
-  { action: 'Access system logs',           admin: true,  chair: false, sec: false, mem: false },
+  { action: 'Zarządzanie kontami użytkowników',         admin: true,  chair: false, sec: false, mem: false },
+  { action: 'Tworzenie/usuwanie komisji',     admin: true,  chair: false, sec: false, mem: false },
+  { action: 'Zarządzanie członkami komisji',     admin: true,  chair: true,  sec: false, mem: false },
+  { action: 'Tworzenie i edycja agendy',       admin: true,  chair: true,  sec: true,  mem: false },
+  { action: 'Otwieranie i zamykanie głosowań',       admin: true,  chair: true,  sec: false, mem: false },
+  { action: 'Uczestnictwo w głosowaniach',       admin: true,  chair: true,  sec: false, mem: true  },
+  { action: 'Przesyłanie załączników PDF',       admin: true,  chair: true,  sec: true,  mem: false },
+  { action: 'Podgląd agendy i dokumentów',      admin: true,  chair: true,  sec: true,  mem: true  },
+  { action: 'Eksport podsumowań sesji',     admin: true,  chair: true,  sec: true,  mem: false },
+  { action: 'Dostęp do logów systemowych',           admin: true,  chair: false, sec: false, mem: false },
 ];
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -125,7 +126,7 @@ function AddMemberModal({ committee, availableUsers, onAdd, onClose }: {
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <div>
             <h3 className="font-extrabold text-slate-900 flex items-center gap-2">
-              <UserPlus className="w-4 h-4 text-blue-600" /> Add member
+              <UserPlus className="w-4 h-4 text-blue-600" /> Dodaj członka
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">{committee.name}</p>
           </div>
@@ -137,14 +138,14 @@ function AddMemberModal({ committee, availableUsers, onAdd, onClose }: {
         <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input autoFocus type="text" placeholder="Search by name..." value={search} onChange={e => setSearch(e.target.value)}
+            <input autoFocus type="text" placeholder="Szukaj po nazwisku..." value={search} onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400" />
           </div>
 
           <div className="space-y-1">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Available users ({filteredUsers.length})</p>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Dostępni użytkownicy ({filteredUsers.length})</p>
             {filteredUsers.length === 0 && (
-              <div className="text-center py-8 text-slate-400"><Users className="w-7 h-7 mx-auto mb-2 opacity-30" /><p className="text-sm">No users available</p></div>
+              <div className="text-center py-8 text-slate-400"><Users className="w-7 h-7 mx-auto mb-2 opacity-30" /><p className="text-sm">Brak dostępnych użytkowników</p></div>
             )}
             {filteredUsers.map(u => (
               <button key={u.id} onClick={() => setSelectedUser(selectedUser?.id === u.id ? null : u)}
@@ -167,7 +168,7 @@ function AddMemberModal({ committee, availableUsers, onAdd, onClose }: {
           {selectedUser && (
             <div className="border-t border-slate-100 pt-4 space-y-2">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Role for: <span className="text-slate-700">{selectedUser.firstName} {selectedUser.lastName}</span>
+                Rola dla: <span className="text-slate-700">{selectedUser.firstName} {selectedUser.lastName}</span>
               </p>
               {ASSIGNABLE_ROLES.map(role => (
                 <button key={role} onClick={() => setSelectedRole(role)}
@@ -188,11 +189,11 @@ function AddMemberModal({ committee, availableUsers, onAdd, onClose }: {
         </div>
 
         <div className="flex gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
-          <button onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-100 transition">Cancel</button>
+          <button onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-100 transition">Anuluj</button>
           <button onClick={() => selectedUser && (onAdd(committee.id, selectedUser, selectedRole), onClose())}
             disabled={!selectedUser}
             className="flex-1 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-40 transition">
-            Add to committee
+            Dodaj do komisji
           </button>
         </div>
       </div>
@@ -215,26 +216,26 @@ function CreateCommitteeModal({ onCreate, onClose }: {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="bg-white rounded-2xl w-full max-w-md border border-slate-200 shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h3 className="font-extrabold text-slate-900 flex items-center gap-2"><Plus className="w-4 h-4 text-blue-600" /> New committee</h3>
+          <h3 className="font-extrabold text-slate-900 flex items-center gap-2"><Plus className="w-4 h-4 text-blue-600" /> Nowa komisja</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-400 transition"><X className="w-4 h-4" /></button>
         </div>
         <div className="p-5 space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Committee name *</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nazwa komisji *</label>
             <input autoFocus type="text" value={name} onChange={e => setName(e.target.value)}
-              placeholder="e.g. Finance and Budget Committee"
+              placeholder="np. Komisja Finansów i Budżetu"
               className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400" />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Opis</label>
             <textarea value={desc} onChange={e => setDesc(e.target.value)} rows={3}
-              placeholder="Committee scope and responsibilities..."
+              placeholder="Zakres i obowiązki komisji..."
               className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none" />
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Type</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Typ</label>
             <div className="grid grid-cols-2 gap-2">
-              {[['permanent', 'Permanent'], ['temporary', 'Temporary']] .map(([v, l]) => (
+              {[['permanent', 'Stała'], ['temporary', 'Doraźna']] .map(([v, l]) => (
                 <button key={v} onClick={() => setType(v as CommitteeType)}
                   className={`py-2.5 text-sm font-bold rounded-xl border transition ${type === v ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}>
                   {l}
@@ -243,7 +244,7 @@ function CreateCommitteeModal({ onCreate, onClose }: {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Color</label>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Kolor</label>
             <div className="flex gap-3">
               {(Object.keys(COLOR_CONFIG) as Committee['color'][]).map(k => (
                 <button key={k} onClick={() => setColor(k)}
@@ -253,11 +254,11 @@ function CreateCommitteeModal({ onCreate, onClose }: {
           </div>
         </div>
         <div className="flex gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
-          <button onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-100 transition">Cancel</button>
+          <button onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-100 transition">Anuluj</button>
           <button onClick={() => { if (name.trim()) { onCreate({ name, description: desc, color, type }); onClose(); }}}
             disabled={!name.trim()}
             className="flex-1 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-40 transition">
-            Create committee
+            Utwórz komisję
           </button>
         </div>
       </div>
@@ -274,10 +275,10 @@ function RBACMatrix() {
       <button onClick={() => setIsOpen(v => !v)}
         className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition">
         <span className="font-extrabold text-slate-900 flex items-center gap-2 text-sm">
-          <Shield className="w-4 h-4 text-blue-600" /> Permissions Matrix (RBAC)
+          <Shield className="w-4 h-4 text-blue-600" /> Macierz Uprawnień (RBAC)
         </span>
         <div className="flex items-center gap-2 text-xs text-slate-400">
-          <Lock className="w-3.5 h-3.5" /> Read only
+          <Lock className="w-3.5 h-3.5" /> Tylko do odczytu
           {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </div>
       </button>
@@ -286,8 +287,8 @@ function RBACMatrix() {
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
-                <th className="text-left px-6 py-3 font-bold text-slate-500 w-1/2">Action</th>
-                {(['Administrator', 'Chairman', 'Secretary', 'Member'] as const).map(r => (
+                <th className="text-left px-6 py-3 font-bold text-slate-500 w-1/2">Akcja</th>
+                {(['Administrator', 'Przewodniczący', 'Sekretarz', 'Członek'] as const).map(r => (
                   <th key={r} className="px-4 py-3 text-center font-bold text-slate-500">{r}</th>
                 ))}
               </tr>
@@ -343,7 +344,7 @@ function CommitteeCard({ committee, canManage, onAddMember, onRemoveMember, onCh
                 <div className="flex items-center gap-2 flex-wrap mb-1">
                   <h3 className="font-extrabold text-slate-900 text-base leading-snug">{committee.name}</h3>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border flex-shrink-0 ${committee.type === 'permanent' ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-violet-50 text-violet-600 border-violet-200'}`}>
-                    {committee.type === 'permanent' ? 'Permanent' : 'Temporary'}
+                    {committee.type === 'permanent' ? 'Stała' : 'Doraźna'}
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 line-clamp-2">{committee.description}</p>
@@ -363,12 +364,12 @@ function CommitteeCard({ committee, canManage, onAddMember, onRemoveMember, onCh
                         <div className="absolute right-0 top-9 z-20 bg-white border border-slate-200 rounded-xl shadow-xl py-1 min-w-[160px]">
                           <button onClick={() => { setMenuOpen(false); onAddMember(committee.id); }}
                             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition">
-                            <UserPlus className="w-3.5 h-3.5 text-blue-500" /> Add member
+                            <UserPlus className="w-3.5 h-3.5 text-blue-500" /> Dodaj członka
                           </button>
                           <div className="my-1 border-t border-slate-100" />
                           <button onClick={() => { setMenuOpen(false); onDelete(committee.id); }}
                             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition">
-                            <Trash2 className="w-3.5 h-3.5" /> Delete committee
+                            <Trash2 className="w-3.5 h-3.5" /> Usuń komisję
                           </button>
                         </div>
                       </>
@@ -378,7 +379,7 @@ function CommitteeCard({ committee, canManage, onAddMember, onRemoveMember, onCh
               </div>
             </div>
             <div className="flex items-center gap-4 mt-3 text-xs text-slate-400">
-              <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{committee.members.length} members</span>
+              <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{committee.members.length} członków</span>
               <span className="flex items-center gap-1 text-emerald-500"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />{onlineCount} online</span>
               {chairman && <span className="flex items-center gap-1 truncate"><Crown className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" /><span className="truncate">{chairman.firstName} {chairman.lastName}</span></span>}
             </div>
@@ -389,7 +390,7 @@ function CommitteeCard({ committee, canManage, onAddMember, onRemoveMember, onCh
       {isExpanded && (
         <div className="border-t border-slate-100">
           {committee.members.length === 0 && (
-            <div className="text-center py-8 text-slate-400"><Users className="w-7 h-7 mx-auto mb-2 opacity-30" /><p className="text-sm">No members — add the first one</p></div>
+            <div className="text-center py-8 text-slate-400"><Users className="w-7 h-7 mx-auto mb-2 opacity-30" /><p className="text-sm">Brak członków — dodaj pierwszego</p></div>
           )}
           <div className="divide-y divide-slate-50">
             {committee.members.map(member => (
@@ -426,7 +427,7 @@ function CommitteeCard({ committee, canManage, onAddMember, onRemoveMember, onCh
             <div className="px-6 py-3 border-t border-slate-100">
               <button onClick={() => onAddMember(committee.id)}
                 className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 transition">
-                <UserPlus className="w-4 h-4" /> Add member
+                <UserPlus className="w-4 h-4" /> Dodaj członka
               </button>
             </div>
           )}
@@ -437,10 +438,6 @@ function CommitteeCard({ committee, canManage, onAddMember, onRemoveMember, onCh
 }
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
-
-// NOTE: Committees API endpoint not yet implemented in backend.
-// This component is ready to connect once backend adds /api/committees endpoints.
-// Currently manages state locally until API is available.
 
 export default function CommitteeManagement() {
   const [committees,    setCommittees]    = useState<Committee[]>([]);
@@ -453,11 +450,10 @@ export default function CommitteeManagement() {
   const [toast,         setToast]         = useState<string | null>(null);
   const [isLoadingUsers,setLoadingUsers]  = useState(true);
 
-  // Fetch available users from API: GET /api/users
   useEffect(() => {
     usersApi.list()
       .then(users => setAvailableUsers(users))
-      .catch(err  => console.error('Failed to load users:', err))
+      .catch(err  => console.error('Błąd ładowania użytkowników:', err))
       .finally(()  => setLoadingUsers(false));
   }, []);
 
@@ -484,32 +480,32 @@ export default function CommitteeManagement() {
     setCommittees(prev => prev.map(c =>
       c.id !== committeeId ? c : { ...c, members: [...c.members, newMember] }
     ));
-    showToast(`${user.firstName} ${user.lastName} added to committee`);
+    showToast(`Użytkownik ${user.firstName} ${user.lastName} dodany do komisji`);
   };
 
   const handleRemoveMember = (committeeId: string, memberId: string) => {
     setCommittees(prev => prev.map(c =>
       c.id !== committeeId ? c : { ...c, members: c.members.filter(m => m.id !== memberId) }
     ));
-    showToast('Member removed from committee');
+    showToast('Usunięto członka z komisji');
   };
 
   const handleChangeRole = (committeeId: string, memberId: string, role: MemberRole) => {
     setCommittees(prev => prev.map(c =>
       c.id !== committeeId ? c : { ...c, members: c.members.map(m => m.id === memberId ? { ...m, memberRole: role } : m) }
     ));
-    showToast(`Role updated: ${MEMBER_ROLE_CONFIG[role].label}`);
+    showToast(`Rola zaktualizowana: ${MEMBER_ROLE_CONFIG[role].label}`);
   };
 
   const handleCreateCommittee = (data: Omit<Committee, 'id' | 'members' | 'createdAt'>) => {
     setCommittees(prev => [...prev, { ...data, id: uid(), members: [], createdAt: new Date().toISOString() }]);
-    showToast(`Committee "${data.name}" created`);
+    showToast(`Komisja "${data.name}" została utworzona`);
   };
 
   const handleDeleteCommittee = (id: string) => {
     const c = committees.find(c => c.id === id);
     setCommittees(prev => prev.filter(c => c.id !== id));
-    if (c) showToast(`Committee "${c.name}" deleted`);
+    if (c) showToast(`Komisja "${c.name}" została usunięta`);
   };
 
   const committeeForModal = committees.find(c => c.id === addMemberFor);
@@ -528,49 +524,46 @@ export default function CommitteeManagement() {
       {showCreate && <CreateCommitteeModal onCreate={handleCreateCommittee} onClose={() => setShowCreate(false)} />}
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
-      {/* Breadcrumb */}
       <div className="bg-white border-b border-slate-200 px-4 py-3">
         <div className="max-w-5xl mx-auto">
           <Link to="/panel" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 font-medium transition">
-            <ArrowLeft className="w-4 h-4" /> Council Panel
+            <ArrowLeft className="w-4 h-4" /> Panel Rady
           </Link>
         </div>
       </div>
 
-      {/* Header */}
       <div className="bg-white border-b border-slate-200 px-4 py-8">
         <div className="max-w-5xl mx-auto space-y-5">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight">Committee Management</h1>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight">Zarządzanie komisjami</h1>
               <p className="text-slate-500 text-sm mt-1 flex items-center gap-3">
-                <span>{committees.length} committees</span>
+                <span>{committees.length} komisji</span>
                 <span className="w-1 h-1 rounded-full bg-slate-300 inline-block" />
-                <span>{totalMembers} members</span>
-                {isLoadingUsers && <span className="flex items-center gap-1 text-slate-400"><Loader2 className="w-3 h-3 animate-spin" /> Loading users...</span>}
+                <span>{totalMembers} członków</span>
+                {isLoadingUsers && <span className="flex items-center gap-1 text-slate-400"><Loader2 className="w-3 h-3 animate-spin" /> Ładowanie użytkowników...</span>}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => setShowRBAC(v => !v)}
                 className={`inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl border transition ${showRBAC ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}>
-                <Shield className="w-4 h-4" /><span className="hidden sm:inline">Permissions</span>
+                <Shield className="w-4 h-4" /><span className="hidden sm:inline">Uprawnienia</span>
               </button>
               <button onClick={() => setShowCreate(true)}
                 className="inline-flex items-center gap-2 bg-slate-900 text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-slate-800 transition shadow-sm">
-                <Plus className="w-4 h-4" /> New committee
+                <Plus className="w-4 h-4" /> Nowa komisja
               </button>
             </div>
           </div>
 
-          {/* Filters */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[200px] max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input type="text" placeholder="Search committees..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              <input type="text" placeholder="Szukaj komisji..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-slate-50" />
             </div>
             <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-              {[['all', 'All'], ['permanent', 'Permanent'], ['temporary', 'Temporary']].map(([v, l]) => (
+              {[['all', 'Wszystkie'], ['permanent', 'Stałe'], ['temporary', 'Doraźne']].map(([v, l]) => (
                 <button key={v} onClick={() => setFilterType(v as typeof filterType)}
                   className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${filterType === v ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
                   {l}
@@ -581,15 +574,14 @@ export default function CommitteeManagement() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-4">
         {showRBAC && <RBACMatrix />}
 
         {filtered.length === 0 && (
           <div className="text-center py-20 text-slate-400">
             <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
-            <p className="font-bold text-slate-500">No committees found</p>
-            <p className="text-sm mt-1">Change search criteria or create a new committee.</p>
+            <p className="font-bold text-slate-500">Nie znaleziono komisji</p>
+            <p className="text-sm mt-1">Zmień kryteria wyszukiwania lub utwórz nową komisję.</p>
           </div>
         )}
 

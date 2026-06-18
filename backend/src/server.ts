@@ -3,50 +3,77 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
-import {errorHandler} from '@/middleware/errorHandler';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import { errorHandler } from '@/middleware/errorHandler';
 import authRoutes from '@/modules/auth/auth.routes';
+import sessionsRoutes from '@/modules/sessions/sessions.routes';
+import usersRoutes from '@/modules/users/users.routes';
+import votingsRoutes from '@/modules/votings/votings.routes';
+import committeesRoutes from '@/modules/committees/committees.routes';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import { initWebsockets } from './modules/votings/votings.websocket';
 
-// Ładowanie zmiennych środowiskowych
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ── MIDDLEWARE BEZPIECZEŃSTWA I OPTYMALIZACJI ──
-app.use(helmet()); // Nagłówki HTTP chroniące aplikację
-app.use(compression()); // Kompresja Gzip dla szybszego działania
-app.use(express.json()); // Parsowanie JSON
-app.use(cookieParser()); // Parsowanie ciasteczek (pod Refresh Token)
+const httpServer = createServer(app);
 
-// Konfiguracja CORS pod frontend (React)
+app.use(helmet());
+app.use(compression());
+app.use(express.json());
+app.use(cookieParser());
+
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+
 app.use(
     cors({
-        origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-        credentials: true, // Wymagane, aby przysyłać ciasteczka HttpOnly
+        origin: frontendUrl,
+        credentials: true,
     }),
 );
 
-// Ograniczenie spamu do API (Rate Limiting)
+// Konfiguracja Socket.io
+const io = new Server(httpServer, {
+    cors: {
+        origin: frontendUrl,
+        methods: ['GET', 'POST'],
+        credentials: true
+    }
+});
+
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minut
-    limit: 100, // Maksymalnie 100 żądań z jednego IP
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
     message: { message: 'Zbyt wiele żądań, spróbuj ponownie później.' },
 });
 app.use('/api', limiter);
 
-// ── TESTOWY ENDPOINT ──
+app.get('/', (_req, res) => {
+    res.status(200).json({
+        message: 'Witamy w API systemu e-Sesja: Cyfrowa Rada Gminy'
+    });
+});
+
 app.get('/health', (_req, res) => {
     res.status(200).json({ status: 'OK', timestamp: new Date() });
 });
 
-// ── GLOBALNA OBSŁUGA BŁĘDÓW ──
+app.use('/api/auth', authRoutes);
+app.use('/api/sessions', sessionsRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/votings', votingsRoutes);
+app.use('/api/committees', committeesRoutes);
+
 app.use(errorHandler);
 
-// ── ROUTING ──
-app.use('/api/auth', authRoutes);
+// Inicjalizacja logiki WebSocketów
+initWebsockets(io);
 
-app.listen(PORT, () => {
-    console.log(`🚀 Serwer e-Sesja działa na porcie ${PORT}`);
+// Zmieniamy app.listen na httpServer.listen
+httpServer.listen(PORT, () => {
+    console.log(`🚀 Serwer e-Sesja z obsługą WebSockets działa na porcie ${PORT}`);
 });

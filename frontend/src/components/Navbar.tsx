@@ -5,10 +5,10 @@ import { ROLE_LABEL } from '../api/api';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const location   = useLocation();
+  const location = useLocation();
   const { currentUser, logout } = useAuth();
 
-  const isPanelRoute = ['/panel', '/session', '/live', '/committees', '/statistics', '/agenda'].some(p =>
+  const isPanelRoute = ['/panel', '/sesja', '/live', '/komisje', '/statystyki', '/agenda', '/podsumowanie'].some(p =>
     location.pathname.startsWith(p)
   );
 
@@ -19,15 +19,14 @@ export default function Navbar() {
 
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-6 bg-blue-600 rounded" />
-            <Link to="/" className="text-base font-bold tracking-tight text-slate-50">MUNICIPAL COUNCIL</Link>
+            <Link to="/" className="text-base font-bold tracking-tight text-slate-50">RADA GMINY NASZA GMINA</Link>
           </div>
 
           <div className="hidden md:flex items-center gap-6">
             {!isPanelRoute && (
               <>
-                <a href="/#votings"   className="text-sm font-medium text-slate-300 hover:text-white transition">Voting Registry</a>
-                <a href="/#calendar"  className="text-sm font-medium text-slate-300 hover:text-white transition">Session Dates</a>
-                <a href="/#recordings"className="text-sm font-medium text-slate-300 hover:text-white transition">Archive</a>
+                <a href="/#glosowania"  className="text-sm font-medium text-slate-300 hover:text-white transition">Rejestr głosowań</a>
+                <a href="/#nagrania"    className="text-sm font-medium text-slate-300 hover:text-white transition">Archiwum nagrań</a>
               </>
             )}
 
@@ -35,12 +34,12 @@ export default function Navbar() {
               <>
                 <Link to="/panel"
                   className={`text-sm font-medium transition ${location.pathname === '/panel' ? 'text-white' : 'text-slate-300 hover:text-white'}`}>
-                  Dashboard
+                  Panel
                 </Link>
                 {(currentUser.role === 'PRZEWODNICZACY' || currentUser.role === 'ADMINISTRATOR') && (
-                  <Link to="/committees"
-                    className={`text-sm font-medium transition ${location.pathname === '/committees' ? 'text-white' : 'text-slate-300 hover:text-white'}`}>
-                    Committees
+                  <Link to="/komisje"
+                    className={`text-sm font-medium transition ${location.pathname.startsWith('/komisje') ? 'text-white' : 'text-slate-300 hover:text-white'}`}>
+                    Komisje
                   </Link>
                 )}
                 <span className="text-xs text-slate-500 border border-slate-700 px-2 py-1 rounded">
@@ -52,16 +51,16 @@ export default function Navbar() {
             {currentUser ? (
               isPanelRoute ? (
                 <button onClick={logout} className="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white text-sm px-4 py-2 rounded font-semibold transition">
-                  Log out
+                  Wyloguj
                 </button>
               ) : (
                 <Link to="/panel" className="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white text-sm px-4 py-2 rounded font-semibold transition">
-                  Council Panel
+                  Panel Radnego
                 </Link>
               )
             ) : (
-              <Link to="/login" className="bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white text-sm px-4 py-2 rounded font-semibold transition">
-                Council Panel
+              <Link to="/login" className="bg-blue-600 hover:bg-blue-500 text-white text-sm px-4 py-2 rounded font-semibold transition">
+                Panel Radnego
               </Link>
             )}
           </div>
@@ -81,23 +80,22 @@ export default function Navbar() {
         <div className="md:hidden pb-4 border-t border-slate-800 px-4 pt-2 space-y-1 bg-slate-950">
           {!isPanelRoute ? (
             <>
-              <a href="/#votings"    className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Voting Registry</a>
-              <a href="/#calendar"   className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Session Dates</a>
-              <a href="/#recordings" className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Archive</a>
+              <a href="/#glosowania" className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Rejestr głosowań</a>
+              <a href="/#nagrania"   className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Archiwum nagrań</a>
               <Link to={currentUser ? '/panel' : '/login'} onClick={() => setIsMenuOpen(false)}
-                className="block w-full mt-2 text-center bg-slate-800 text-white text-sm py-2 rounded font-semibold border border-slate-700">
-                {currentUser ? 'Council Panel' : 'Log in'}
+                className="block w-full mt-2 text-center bg-blue-600 text-white text-sm py-2 rounded font-semibold">
+                {currentUser ? 'Panel Radnego' : 'Zaloguj się'}
               </Link>
             </>
           ) : (
             <>
-              <Link to="/panel"       onClick={() => setIsMenuOpen(false)} className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Dashboard</Link>
+              <Link to="/panel" onClick={() => setIsMenuOpen(false)} className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Panel</Link>
               {currentUser && (currentUser.role === 'PRZEWODNICZACY' || currentUser.role === 'ADMINISTRATOR') && (
-                <Link to="/committees" onClick={() => setIsMenuOpen(false)} className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Committees</Link>
+                <Link to="/komisje" onClick={() => setIsMenuOpen(false)} className="block py-2 text-sm font-medium text-slate-300 hover:text-white">Komisje</Link>
               )}
               <button onClick={() => { logout(); setIsMenuOpen(false); }}
                 className="block w-full mt-2 text-center bg-slate-800 text-white text-sm py-2 rounded font-semibold border border-slate-700">
-                Log out
+                Wyloguj
               </button>
             </>
           )}
