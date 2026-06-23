@@ -92,11 +92,27 @@ export default function SessionStatistics() {
   }, [id]);
 
   if (ladowanie) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-slate-400">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          <span className="text-sm">Ładowanie statystyk...</span>
+        return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="bg-white border-b border-slate-200 px-4 py-3">
+          <div className="max-w-5xl mx-auto h-4 bg-slate-200 rounded w-32 animate-pulse" />
+        </div>
+        <div className="max-w-5xl mx-auto px-4 py-8 space-y-4 animate-pulse">
+          <div className="h-7 bg-slate-200 rounded w-1/2" />
+          <div className="h-4 bg-slate-100 rounded w-1/3" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+            {[...Array(4)].map((_,i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded p-4">
+                <div className="h-3 bg-slate-100 rounded w-2/3 mb-2" />
+                <div className="h-6 bg-slate-200 rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+          <div className="bg-white border border-slate-200 rounded p-6 space-y-3">
+            {[...Array(5)].map((_,i) => (
+              <div key={i} className="h-4 bg-slate-100 rounded" style={{width: `${80 - i*8}%`}} />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -108,7 +124,7 @@ export default function SessionStatistics() {
         <div className="text-center">
           <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
           <p className="font-bold text-slate-700">{blad ?? 'Nie znaleziono sesji'}</p>
-          <Link to="/panel" className="text-sm text-blue-600 hover:underline mt-2 inline-block">← Wróć do panelu</Link>
+          <Link to="/panel" className="text-sm text-[#B91C1C] hover:underline mt-2 inline-block">← Wróć do panelu</Link>
         </div>
       </div>
     );
@@ -134,7 +150,7 @@ export default function SessionStatistics() {
             <ArrowLeft className="w-4 h-4" /> Szczegóły sesji
           </Link>
           <button onClick={() => window.print()}
-            className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-800 transition">
+            className="inline-flex items-center gap-2 text-sm font-bold text-[#B91C1C] hover:text-[#7F1D1D] transition">
             <FileDown className="w-4 h-4" /> Eksport (PDF)
           </button>
         </div>
@@ -144,8 +160,8 @@ export default function SessionStatistics() {
       <div className="bg-white border-b border-slate-200 px-4 py-8">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-2 mb-2">
-            <BarChart2 className="w-4 h-4 text-blue-600" />
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Statystyki sesji</span>
+            <BarChart2 className="w-4 h-4 text-[#B91C1C]" />
+            <span className="text-xs font-bold text-[#B91C1C] uppercase tracking-widest">Statystyki sesji</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight">{sesja.title}</h1>
           <div className="flex flex-wrap gap-4 mt-2 text-sm text-slate-500">
@@ -163,7 +179,7 @@ export default function SessionStatistics() {
             { ikona: <BarChart2    className="w-5 h-5" />, etykieta: 'Głosowań łącznie',   wartosc: wszystkieGlos.length,  bg: 'bg-slate-100',  tc: 'text-slate-600'    },
             { ikona: <CheckCircle2 className="w-5 h-5" />, etykieta: 'Uchwał przyjętych',  wartosc: uchwalone,             bg: 'bg-emerald-50', tc: 'text-emerald-600'  },
             { ikona: <XCircle      className="w-5 h-5" />, etykieta: 'Odrzuconych',        wartosc: odrzucone,             bg: 'bg-red-50',     tc: 'text-red-500'      },
-            { ikona: <TrendingUp   className="w-5 h-5" />, etykieta: 'Punktów agendy',     wartosc: punktyAgendy.length,   bg: 'bg-blue-50',    tc: 'text-blue-600'     },
+            { ikona: <TrendingUp   className="w-5 h-5" />, etykieta: 'Punktów agendy',     wartosc: punktyAgendy.length,   bg: 'bg-red-50',    tc: 'text-[#B91C1C]'     },
           ].map((s, i) => (
             <div key={i} className="bg-white border border-slate-200 rounded-xl p-5 flex items-start gap-4 shadow-sm">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${s.bg} ${s.tc}`}>{s.ikona}</div>
@@ -180,7 +196,7 @@ export default function SessionStatistics() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-extrabold text-slate-900 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                <CheckCircle2 className="w-4 h-4 text-[#B91C1C]" />
                 Wyniki głosowań ({zakonczone.length})
               </h2>
               <div className="flex items-center gap-3 text-xs font-semibold text-slate-400">
@@ -205,7 +221,7 @@ export default function SessionStatistics() {
         {/* Podsumowanie */}
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <h2 className="font-extrabold text-slate-900 mb-4 flex items-center gap-2 text-sm">
-            <Award className="w-4 h-4 text-blue-600" /> Podsumowanie sesji
+            <Award className="w-4 h-4 text-[#B91C1C]" /> Podsumowanie sesji
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
             {[

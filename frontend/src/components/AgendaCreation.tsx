@@ -32,7 +32,7 @@ interface DanePunktu {
 
 const KONFIGURACJA_TYPU: Record<TypPunktu, { etykieta: string; kropkaKlasa: string }> = {
   standard:   { etykieta: 'Standardowy',  kropkaKlasa: 'bg-slate-400' },
-  glosowanie: { etykieta: 'Głosowanie',   kropkaKlasa: 'bg-blue-500'  },
+  glosowanie: { etykieta: 'Głosowanie',   kropkaKlasa: 'bg-[#B91C1C]'  },
   informacja: { etykieta: 'Informacja',   kropkaKlasa: 'bg-amber-400' },
   przerwa:    { etykieta: 'Przerwa',      kropkaKlasa: 'bg-slate-300' },
 };
@@ -112,7 +112,7 @@ function KartaPunktu({ punkt, indeks, onAktualizuj, onUsun, onDragStart, onDragE
             {punkt.referent && <span className="text-xs text-slate-400 flex items-center gap-1"><Users className="w-3 h-3" />{punkt.referent}</span>}
             <span className="text-xs text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" />{formatujCzas(punkt.czasMinuty)}</span>
             {punkt.zalaczniki.length > 0 && <span className="text-xs text-slate-400 flex items-center gap-1"><Paperclip className="w-3 h-3" />{punkt.zalaczniki.length}</span>}
-            {punkt.wymagaGlosowania && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">Głosowanie</span>}
+            {punkt.wymagaGlosowania && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-[#B91C1C] border border-red-200">Głosowanie</span>}
           </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
@@ -131,13 +131,13 @@ function KartaPunktu({ punkt, indeks, onAktualizuj, onUsun, onDragStart, onDragE
             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Opis / uzasadnienie</label>
             <textarea value={punkt.opis} onChange={e => onAktualizuj(punkt.id, { opis: e.target.value })}
               placeholder="Opcjonalny opis punktu..." rows={2}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white resize-none" />
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B91C1C] bg-white resize-none" />
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Typ</label>
               <select value={punkt.typ} onChange={e => onAktualizuj(punkt.id, { typ: e.target.value as TypPunktu, wymagaGlosowania: e.target.value === 'glosowanie' })}
-                className="w-full px-2.5 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white font-semibold">
+                className="w-full px-2.5 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B91C1C] bg-white font-semibold">
                 {(Object.keys(KONFIGURACJA_TYPU) as TypPunktu[]).map(t => (
                   <option key={t} value={t}>{KONFIGURACJA_TYPU[t].etykieta}</option>
                 ))}
@@ -147,19 +147,19 @@ function KartaPunktu({ punkt, indeks, onAktualizuj, onUsun, onDragStart, onDragE
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Referent</label>
               <input type="text" value={punkt.referent} onChange={e => onAktualizuj(punkt.id, { referent: e.target.value })}
                 placeholder="Imię i nazwisko referenta..."
-                className="w-full px-2.5 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white" />
+                className="w-full px-2.5 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B91C1C] bg-white" />
             </div>
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Czas (min)</label>
               <input type="number" min={1} max={240} value={punkt.czasMinuty}
                 onChange={e => onAktualizuj(punkt.id, { czasMinuty: Math.max(1, parseInt(e.target.value) || 1) })}
-                className="w-full px-2.5 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white font-mono text-center" />
+                className="w-full px-2.5 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B91C1C] bg-white font-mono text-center" />
             </div>
           </div>
 
           <label className="flex items-center gap-3 cursor-pointer select-none">
             <div onClick={() => onAktualizuj(punkt.id, { wymagaGlosowania: !punkt.wymagaGlosowania })}
-              className={`w-10 h-6 rounded-full flex items-center px-0.5 transition-colors ${punkt.wymagaGlosowania ? 'bg-blue-600' : 'bg-slate-200'}`}>
+              className={`w-10 h-6 rounded-full flex items-center px-0.5 transition-colors ${punkt.wymagaGlosowania ? 'bg-[#B91C1C]' : 'bg-slate-200'}`}>
               <div className={`w-5 h-5 rounded-full bg-white shadow transition-transform ${punkt.wymagaGlosowania ? 'translate-x-4' : 'translate-x-0'}`} />
             </div>
             <span className="text-xs font-semibold text-slate-600">Wymaga głosowania</span>
@@ -168,21 +168,21 @@ function KartaPunktu({ punkt, indeks, onAktualizuj, onUsun, onDragStart, onDragE
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Załączniki ({punkt.zalaczniki.length})</label>
-              <button onClick={() => plikRef.current?.click()} className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-800 transition">
+              <button onClick={() => plikRef.current?.click()} className="inline-flex items-center gap-1 text-xs font-bold text-[#B91C1C] hover:text-[#7F1D1D] transition">
                 <Plus className="w-3 h-3" /> Dodaj plik
               </button>
               <input ref={plikRef} type="file" multiple accept=".pdf,.docx,.xlsx" className="hidden" onChange={handleDodajPlik} />
             </div>
             {punkt.zalaczniki.length === 0 ? (
               <button onClick={() => plikRef.current?.click()}
-                className="w-full border-2 border-dashed border-slate-200 rounded-xl py-4 text-xs text-slate-400 hover:border-blue-300 hover:text-blue-500 transition flex items-center justify-center gap-2">
+                className="w-full border-2 border-dashed border-slate-200 rounded-xl py-4 text-xs text-slate-400 hover:border-red-300 hover:text-[#B91C1C] transition flex items-center justify-center gap-2">
                 <Paperclip className="w-4 h-4" /> Przeciągnij pliki lub kliknij aby dodać
               </button>
             ) : (
               <div className="space-y-1.5">
                 {punkt.zalaczniki.map(z => (
                   <div key={z.id} className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2">
-                    <FileText className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" />
+                    <FileText className="w-3.5 h-3.5 text-[#B91C1C] flex-shrink-0" />
                     <span className="text-xs font-medium text-slate-700 flex-1 truncate">{z.nazwa}</span>
                     <span className="text-[10px] text-slate-400 flex-shrink-0">{z.rozmiar}</span>
                     <button onClick={() => onAktualizuj(punkt.id, { zalaczniki: punkt.zalaczniki.filter(a => a.id !== z.id) })}
@@ -207,7 +207,7 @@ function PodgladAgendy({ punkty, tytulSesji }: { punkty: DanePunktu[]; tytulSesj
   return (
     <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
       <div className="bg-slate-950 px-5 py-4">
-        <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-1">Podgląd</p>
+        <p className="text-xs font-bold text-red-400 uppercase tracking-widest mb-1">Podgląd</p>
         <p className="text-white font-extrabold text-base">{tytulSesji || 'Sesja'}</p>
       </div>
       <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100">
@@ -235,7 +235,7 @@ function PodgladAgendy({ punkty, tytulSesji }: { punkty: DanePunktu[]; tytulSesj
               </p>
             </div>
             {p.wymagaGlosowania && (
-              <span className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="w-4 h-4 rounded-full bg-[#B91C1C] flex items-center justify-center flex-shrink-0 mt-0.5">
                 <span className="w-2 h-2 rounded-full bg-white" />
               </span>
             )}
@@ -346,7 +346,7 @@ export default function AgendaCreation() {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-1.5">Tworzenie agendy</p>
+              <p className="text-xs font-bold text-[#B91C1C] uppercase tracking-widest mb-1.5">Tworzenie agendy</p>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight">
                 {sessionId ? `Sesja #${sessionId}` : 'Nowa agenda'}
               </h1>
@@ -364,7 +364,7 @@ export default function AgendaCreation() {
                 <Save className="w-4 h-4" />{zapisywanie ? 'Zapisywanie...' : 'Zapisz'}
               </button>
               <button onClick={handlePublikuj} disabled={zapisywanie}
-                className="inline-flex items-center gap-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2.5 rounded-xl transition shadow-sm disabled:opacity-50">
+                className="inline-flex items-center gap-2 text-sm font-bold text-white bg-[#B91C1C] hover:bg-[#991B1B] px-4 py-2.5 rounded-xl transition shadow-sm disabled:opacity-50">
                 <Send className="w-4 h-4" /> Opublikuj agendę
               </button>
             </div>
@@ -374,7 +374,7 @@ export default function AgendaCreation() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
             {[
               { etykieta: 'Punktów',     wartosc: punkty.length,           cls: 'text-slate-900' },
-              { etykieta: 'Głosowań',   wartosc: liczbaGlos,               cls: 'text-blue-600'  },
+              { etykieta: 'Głosowań',   wartosc: liczbaGlos,               cls: 'text-[#B91C1C]'  },
               { etykieta: 'Załączników', wartosc: liczbaZal,               cls: 'text-slate-900' },
               { etykieta: 'Szac. czas',  wartosc: formatujCzas(lacznyCzas), cls: 'text-slate-900' },
             ].map(s => (
@@ -394,7 +394,7 @@ export default function AgendaCreation() {
           <div className={podglad ? 'lg:col-span-2' : ''}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-extrabold text-slate-900 flex items-center gap-2 text-sm">
-                <FileText className="w-4 h-4 text-blue-600" /> Punkty porządku obrad ({punkty.length})
+                <FileText className="w-4 h-4 text-[#B91C1C]" /> Punkty porządku obrad ({punkty.length})
               </h2>
               <div className="flex items-center gap-1.5 text-xs text-slate-400">
                 <GripVertical className="w-3.5 h-3.5" /> Przeciągnij aby zmienić kolejność
@@ -418,7 +418,7 @@ export default function AgendaCreation() {
 
             <div className="flex flex-wrap gap-2 mt-4">
               <button onClick={dodajPunkt}
-                className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100 px-4 py-2.5 rounded-xl transition">
+                className="inline-flex items-center gap-2 text-sm font-bold text-[#B91C1C] bg-red-50 border border-red-200 hover:bg-red-100 px-4 py-2.5 rounded-xl transition">
                 <Plus className="w-4 h-4" /> Dodaj punkt
               </button>
               <button onClick={dodajPrzerwe}
@@ -433,7 +433,7 @@ export default function AgendaCreation() {
               <div className="flex flex-wrap gap-2">
                 {SZYBKIE_SZABLONY.map(szablon => (
                   <button key={szablon} onClick={() => dodajSzablon(szablon)}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:border-blue-300 hover:text-blue-700 hover:bg-blue-50 px-3 py-2 rounded-lg transition">
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 hover:border-red-300 hover:text-[#991B1B] hover:bg-red-50 px-3 py-2 rounded-lg transition">
                     <Plus className="w-3 h-3" /> {szablon}
                   </button>
                 ))}

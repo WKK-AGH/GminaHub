@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
@@ -11,7 +10,7 @@ import { usersApi, type UserListItem, type UserRole, ROLE_LABEL } from '../api/a
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
 type CommitteeType = 'permanent' | 'temporary';
-type MemberRole    = 'chairman' | 'secretary' | 'member';
+type MemberRole    = 'chairman' | 'member';
 
 interface CommitteeMember {
   id: string;
@@ -37,7 +36,7 @@ interface Committee {
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
 const COLOR_CONFIG: Record<string, { dot: string; bg: string; text: string; border: string }> = {
-  blue:   { dot: 'bg-blue-500',   bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200'   },
+  blue:   { dot: 'bg-[#B91C1C]',   bg: 'bg-red-50',   text: 'text-[#991B1B]',   border: 'border-red-200'   },
   teal:   { dot: 'bg-teal-500',   bg: 'bg-teal-50',   text: 'text-teal-700',   border: 'border-teal-200'   },
   amber:  { dot: 'bg-amber-500',  bg: 'bg-amber-50',  text: 'text-amber-700',  border: 'border-amber-200'  },
   rose:   { dot: 'bg-rose-500',   bg: 'bg-rose-50',   text: 'text-rose-700',   border: 'border-rose-200'   },
@@ -45,12 +44,11 @@ const COLOR_CONFIG: Record<string, { dot: string; bg: string; text: string; bord
 };
 
 const MEMBER_ROLE_CONFIG: Record<MemberRole, { label: string; className: string; icon: React.ReactNode; description: string }> = {
-  chairman:  { label: 'Przewodniczący', className: 'bg-blue-50   text-blue-700   border-blue-200',  icon: <Crown  className="w-3 h-3" />, description: 'Zarządza porządkiem obrad i otwiera głosowania.'  },
-  secretary: { label: 'Sekretarz', className: 'bg-amber-50  text-amber-700  border-amber-200', icon: <Edit2  className="w-3 h-3" />, description: 'Edytuje dokumenty i załączniki.'    },
+  chairman:  { label: 'Przewodniczący', className: 'bg-red-50   text-[#991B1B]   border-red-200',  icon: <Crown  className="w-3 h-3" />, description: 'Zarządza porządkiem obrad i otwiera głosowania.'  },
   member:    { label: 'Członek',    className: 'bg-slate-100 text-slate-600  border-slate-200', icon: <Users  className="w-3 h-3" />, description: 'Uczestniczy w głosowaniach.'           },
 };
 
-const ASSIGNABLE_ROLES: MemberRole[] = ['chairman', 'secretary', 'member'];
+const ASSIGNABLE_ROLES: MemberRole[] = ['chairman', 'member'];
 
 const PERMISSIONS_MATRIX = [
   { action: 'Zarządzanie kontami użytkowników',         admin: true,  chair: false, sec: false, mem: false },
@@ -126,7 +124,7 @@ function AddMemberModal({ committee, availableUsers, onAdd, onClose }: {
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <div>
             <h3 className="font-extrabold text-slate-900 flex items-center gap-2">
-              <UserPlus className="w-4 h-4 text-blue-600" /> Dodaj członka
+              <UserPlus className="w-4 h-4 text-[#B91C1C]" /> Dodaj członka
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">{committee.name}</p>
           </div>
@@ -139,7 +137,7 @@ function AddMemberModal({ committee, availableUsers, onAdd, onClose }: {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input autoFocus type="text" placeholder="Szukaj po nazwisku..." value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400" />
+              className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B91C1C]" />
           </div>
 
           <div className="space-y-1">
@@ -150,7 +148,7 @@ function AddMemberModal({ committee, availableUsers, onAdd, onClose }: {
             {filteredUsers.map(u => (
               <button key={u.id} onClick={() => setSelectedUser(selectedUser?.id === u.id ? null : u)}
                 className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition border ${
-                  selectedUser?.id === u.id ? 'bg-blue-50 border-blue-300' : 'hover:bg-slate-50 border-transparent'
+                  selectedUser?.id === u.id ? 'bg-red-50 border-red-300' : 'hover:bg-slate-50 border-transparent'
                 }`}>
                 <Avatar initials={`${u.firstName[0]}${u.lastName[0]}`} size="sm" />
                 <div className="flex-1 min-w-0">
@@ -158,7 +156,7 @@ function AddMemberModal({ committee, availableUsers, onAdd, onClose }: {
                   <p className="text-xs text-slate-400 truncate">{u.login}</p>
                 </div>
                 {selectedUser?.id === u.id
-                  ? <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0"><Check className="w-3 h-3 text-white" /></div>
+                  ? <div className="w-5 h-5 rounded-full bg-[#B91C1C] flex items-center justify-center flex-shrink-0"><Check className="w-3 h-3 text-white" /></div>
                   : <div className="w-5 h-5 rounded-full border-2 border-slate-200 flex-shrink-0" />
                 }
               </button>
@@ -173,9 +171,9 @@ function AddMemberModal({ committee, availableUsers, onAdd, onClose }: {
               {ASSIGNABLE_ROLES.map(role => (
                 <button key={role} onClick={() => setSelectedRole(role)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition ${
-                    selectedRole === role ? 'border-blue-300 bg-blue-50' : 'border-slate-100 hover:border-slate-200'
+                    selectedRole === role ? 'border-red-300 bg-red-50' : 'border-slate-100 hover:border-slate-200'
                   }`}>
-                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${selectedRole === role ? 'border-blue-600 bg-blue-600' : 'border-slate-300'}`}>
+                  <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${selectedRole === role ? 'border-[#B91C1C] bg-[#B91C1C]' : 'border-slate-300'}`}>
                     {selectedRole === role && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                   </div>
                   <div className="flex-1">
@@ -192,7 +190,7 @@ function AddMemberModal({ committee, availableUsers, onAdd, onClose }: {
           <button onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-100 transition">Anuluj</button>
           <button onClick={() => selectedUser && (onAdd(committee.id, selectedUser, selectedRole), onClose())}
             disabled={!selectedUser}
-            className="flex-1 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-40 transition">
+            className="flex-1 py-2.5 text-sm font-bold text-white bg-[#B91C1C] rounded-xl hover:bg-[#991B1B] disabled:opacity-40 transition">
             Dodaj do komisji
           </button>
         </div>
@@ -216,7 +214,7 @@ function CreateCommitteeModal({ onCreate, onClose }: {
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="bg-white rounded-2xl w-full max-w-md border border-slate-200 shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h3 className="font-extrabold text-slate-900 flex items-center gap-2"><Plus className="w-4 h-4 text-blue-600" /> Nowa komisja</h3>
+          <h3 className="font-extrabold text-slate-900 flex items-center gap-2"><Plus className="w-4 h-4 text-[#B91C1C]" /> Nowa komisja</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-400 transition"><X className="w-4 h-4" /></button>
         </div>
         <div className="p-5 space-y-4">
@@ -224,13 +222,13 @@ function CreateCommitteeModal({ onCreate, onClose }: {
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nazwa komisji *</label>
             <input autoFocus type="text" value={name} onChange={e => setName(e.target.value)}
               placeholder="np. Komisja Finansów i Budżetu"
-              className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400" />
+              className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B91C1C]" />
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Opis</label>
             <textarea value={desc} onChange={e => setDesc(e.target.value)} rows={3}
               placeholder="Zakres i obowiązki komisji..."
-              className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none" />
+              className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B91C1C] resize-none" />
           </div>
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Typ</label>
@@ -257,7 +255,7 @@ function CreateCommitteeModal({ onCreate, onClose }: {
           <button onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-100 transition">Anuluj</button>
           <button onClick={() => { if (name.trim()) { onCreate({ name, description: desc, color, type }); onClose(); }}}
             disabled={!name.trim()}
-            className="flex-1 py-2.5 text-sm font-bold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-40 transition">
+            className="flex-1 py-2.5 text-sm font-bold text-white bg-[#B91C1C] rounded-xl hover:bg-[#991B1B] disabled:opacity-40 transition">
             Utwórz komisję
           </button>
         </div>
@@ -275,7 +273,7 @@ function RBACMatrix() {
       <button onClick={() => setIsOpen(v => !v)}
         className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition">
         <span className="font-extrabold text-slate-900 flex items-center gap-2 text-sm">
-          <Shield className="w-4 h-4 text-blue-600" /> Macierz Uprawnień (RBAC)
+          <Shield className="w-4 h-4 text-[#B91C1C]" /> Macierz Uprawnień (RBAC)
         </span>
         <div className="flex items-center gap-2 text-xs text-slate-400">
           <Lock className="w-3.5 h-3.5" /> Tylko do odczytu
@@ -288,7 +286,7 @@ function RBACMatrix() {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className="text-left px-6 py-3 font-bold text-slate-500 w-1/2">Akcja</th>
-                {(['Administrator', 'Przewodniczący', 'Sekretarz', 'Członek'] as const).map(r => (
+                {(['Administrator', 'Przewodniczący', 'Członek'] as const).map(r => (
                   <th key={r} className="px-4 py-3 text-center font-bold text-slate-500">{r}</th>
                 ))}
               </tr>
@@ -364,7 +362,7 @@ function CommitteeCard({ committee, canManage, onAddMember, onRemoveMember, onCh
                         <div className="absolute right-0 top-9 z-20 bg-white border border-slate-200 rounded-xl shadow-xl py-1 min-w-[160px]">
                           <button onClick={() => { setMenuOpen(false); onAddMember(committee.id); }}
                             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition">
-                            <UserPlus className="w-3.5 h-3.5 text-blue-500" /> Dodaj członka
+                            <UserPlus className="w-3.5 h-3.5 text-[#B91C1C]" /> Dodaj członka
                           </button>
                           <div className="my-1 border-t border-slate-100" />
                           <button onClick={() => { setMenuOpen(false); onDelete(committee.id); }}
@@ -381,7 +379,7 @@ function CommitteeCard({ committee, canManage, onAddMember, onRemoveMember, onCh
             <div className="flex items-center gap-4 mt-3 text-xs text-slate-400">
               <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{committee.members.length} członków</span>
               <span className="flex items-center gap-1 text-emerald-500"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />{onlineCount} online</span>
-              {chairman && <span className="flex items-center gap-1 truncate"><Crown className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" /><span className="truncate">{chairman.firstName} {chairman.lastName}</span></span>}
+              {chairman && <span className="flex items-center gap-1 truncate"><Crown className="w-3.5 h-3.5 text-red-400 flex-shrink-0" /><span className="truncate">{chairman.firstName} {chairman.lastName}</span></span>}
             </div>
           </div>
         </div>
@@ -404,7 +402,7 @@ function CommitteeCard({ committee, canManage, onAddMember, onRemoveMember, onCh
                   <div className="flex items-center gap-1.5">
                     <select defaultValue={member.memberRole} autoFocus
                       onChange={e => { onChangeRole(committee.id, member.id, e.target.value as MemberRole); setEditingId(null); }}
-                      className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                      className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#B91C1C]">
                       {ASSIGNABLE_ROLES.map(r => <option key={r} value={r}>{MEMBER_ROLE_CONFIG[r].label}</option>)}
                     </select>
                     <button onClick={() => setEditingId(null)} className="p-1.5 text-slate-400 hover:text-slate-600 transition"><X className="w-3.5 h-3.5" /></button>
@@ -426,7 +424,7 @@ function CommitteeCard({ committee, canManage, onAddMember, onRemoveMember, onCh
           {canManage && (
             <div className="px-6 py-3 border-t border-slate-100">
               <button onClick={() => onAddMember(committee.id)}
-                className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-800 transition">
+                className="inline-flex items-center gap-2 text-sm font-semibold text-[#B91C1C] hover:text-[#7F1D1D] transition">
                 <UserPlus className="w-4 h-4" /> Dodaj członka
               </button>
             </div>
@@ -546,7 +544,7 @@ export default function CommitteeManagement() {
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => setShowRBAC(v => !v)}
-                className={`inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl border transition ${showRBAC ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}>
+                className={`inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl border transition ${showRBAC ? 'bg-red-50 text-[#991B1B] border-red-200' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}>
                 <Shield className="w-4 h-4" /><span className="hidden sm:inline">Uprawnienia</span>
               </button>
               <button onClick={() => setShowCreate(true)}
@@ -560,7 +558,7 @@ export default function CommitteeManagement() {
             <div className="relative flex-1 min-w-[200px] max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input type="text" placeholder="Szukaj komisji..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-slate-50" />
+                className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B91C1C] bg-slate-50" />
             </div>
             <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
               {[['all', 'Wszystkie'], ['permanent', 'Stałe'], ['temporary', 'Doraźne']].map(([v, l]) => (

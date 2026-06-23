@@ -263,3 +263,37 @@ export const votingsApi = {
 export const usersApi = {
   list: () => apiData<UserListItem[]>('/users'),
 };
+
+// ─── DOKUMENTY API ────────────────────────────────────────────────────────────
+
+export const documentsApi = {
+  // Upload pliku do punktu agendy — wysyła FormData (multipart)
+  upload: async (agendaItemId: string, file: File): Promise<SessionDocument> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', file.name);
+
+    const token = getAccessToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${BASE_URL}/agenda-items/${agendaItemId}/documents`, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      let message = `Błąd ${res.status}`;
+      try { const body = await res.json(); message = body.message ?? message; } catch { /* ignoruj */ }
+      throw { message, status: res.status } as ApiError;
+    }
+
+    const data = await res.json();
+    return data.data as SessionDocument;
+  },
+
+  // Usunięcie dokumentu
+  delete: (documentId: string) => apiData<void>(`/documents/${documentId}`, { method: 'DELETE' }),
+};

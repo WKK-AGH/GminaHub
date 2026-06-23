@@ -16,28 +16,45 @@ interface AuthContextType {
   hasRole: (...roles: UserRole[]) => boolean;
 }
 
-function mapujUzytkownika(user: UserResponse): CurrentUser {
-  return { id: user.id, login: user.login, firstName: user.firstName, lastName: user.lastName, fullName: getFullName(user), initials: getInitials(user), role: user.role };
+function mapUser(user: UserResponse): CurrentUser {
+  return {
+    id: user.id,
+    login: user.login,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    fullName: getFullName(user),
+    initials: getInitials(user),
+    role: user.role,
+  };
 }
 
-// Mock użytkownicy — gdy backend niedostępny
-const MOCK_UZYTKOWNICY: Record<string, { haslo: string; user: UserResponse }> = {
-  'admin':          { haslo: 'Admin123!',  user: { id: '1', firstName: 'Główny',    lastName: 'Administrator', role: 'ADMINISTRATOR',  login: 'admin'          } },
-  'radny':          { haslo: 'Radny123!',  user: { id: '2', firstName: 'Jan',       lastName: 'Kowalski',      role: 'RADNY',          login: 'radny'          } },
-  'przewodniczacy': { haslo: 'Przew123!',  user: { id: '3', firstName: 'Anna',      lastName: 'Wiśniewska',    role: 'PRZEWODNICZACY', login: 'przewodniczacy' } },
+// Fallback accounts used when backend is unavailable (demo / development)
+const MOCK_USERS: Record<string, { password: string; user: UserResponse }> = {
+  'admin': {
+    password: 'Admin123!',
+    user: { id: '1', firstName: 'Administrator', lastName: '', role: 'ADMINISTRATOR', login: 'admin' },
+  },
+  'radny': {
+    password: 'Radny123!',
+    user: { id: '2', firstName: 'Jan', lastName: 'Kowalski', role: 'RADNY', login: 'radny' },
+  },
+  'przewodniczacy': {
+    password: 'Przew123!',
+    user: { id: '3', firstName: 'Anna', lastName: 'Wiśniewska', role: 'PRZEWODNICZACY', login: 'przewodniczacy' },
+  },
 };
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth musi być użyty wewnątrz AuthProvider');
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [isLoading,   setIsLoading]   = useState(false); // false — mock nie potrzebuje ładowania
+  const [isLoading,   setIsLoading]   = useState(false);
 
   useEffect(() => {
     const handler = () => { setCurrentUser(null); setAccessToken(null); };
@@ -46,22 +63,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (loginStr: string, password: string) => {
-    // Najpierw próbuj backend
+    // Try real backend first
     try {
       const res = await authApi.login({ login: loginStr, password });
-      if (res.success) { setAccessToken(res.accessToken); setCurrentUser(mapujUzytkownika(res.user)); return; }
-    } catch { /* backend niedostępny — użyj mocka */ }
+      if (res.success) {
+        setAccessToken(res.accessToken);
+        setCurrentUser(mapUser(res.user));
+        return;
+      }
+    } catch {
+      // Backend unavailable — fall through to mock
+    }
 
     // Mock fallback
-    const mock = MOCK_UZYTKOWNICY[loginStr];
-    if (mock && mock.haslo === password) { setCurrentUser(mapujUzytkownika(mock.user)); return; }
+    const mock = MOCK_USERS[loginStr];
+    if (mock && mock.password === password) {
+      setCurrentUser(mapUser(mock.user));
+      return;
+    }
 
     throw new Error('Nieprawidłowy login lub hasło');
   }, []);
 
   const logout = useCallback(async () => {
-    try { await authApi.logout(); } catch { /* ignoruj */ }
-    setAccessToken(null); setCurrentUser(null);
+    try { await authApi.logout(); } catch { /* ignore */ }
+    setAccessToken(null);
+    setCurrentUser(null);
   }, []);
 
   const hasRole = useCallback((...roles: UserRole[]) => {

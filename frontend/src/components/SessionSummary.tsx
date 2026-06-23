@@ -7,17 +7,17 @@ import {
 } from 'lucide-react';
 import { sessionsApi, type Session } from '../api/api';
 
-function formatujDate(iso: string) {
+function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
 }
-function formatujCzas(iso: string) {
+function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
 }
 function pct(n: number, total: number) {
   return total > 0 ? Math.round((n / total) * 100) : 0;
 }
 
-const STATUS_ETYKIETA: Record<string, string> = {
+const STATUS_LABEL: Record<string, string> = {
   PLANNED:  'Nadchodząca',
   ACTIVE:   'W trakcie',
   FINISHED: 'Zakończona',
@@ -25,54 +25,70 @@ const STATUS_ETYKIETA: Record<string, string> = {
 
 export default function SessionSummary() {
   const { id } = useParams<{ id: string }>();
-  const [sesja,     setSesja]     = useState<Session | null>(null);
-  const [ladowanie, setLadowanie] = useState(true);
-  const [blad,      setBlad]      = useState<string | null>(null);
+  const [session, setSession]     = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error,   setError]      = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     sessionsApi.getById(id)
-      .then(data => setSesja(data))
-      .catch(err  => setBlad(err.message ?? 'Błąd pobierania podsumowania'))
-      .finally(()  => setLadowanie(false));
+      .then(data => setSession(data))
+      .catch(err  => setError(err.message ?? 'Błąd pobierania podsumowania'))
+      .finally(()  => setLoading(false));
   }, [id]);
 
-  const handleEksportPDF = () => {
+  const handleExportPDF = () => {
     window.print();
   };
 
-  if (ladowanie) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-slate-400">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          <span className="text-sm">Ładowanie podsumowania...</span>
+  if (loading) {
+        return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="bg-white border-b border-slate-200 px-4 py-3">
+          <div className="max-w-5xl mx-auto h-4 bg-slate-200 rounded w-32 animate-pulse" />
+        </div>
+        <div className="max-w-5xl mx-auto px-4 py-8 space-y-4 animate-pulse">
+          <div className="h-7 bg-slate-200 rounded w-1/2" />
+          <div className="h-4 bg-slate-100 rounded w-1/3" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+            {[...Array(4)].map((_,i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded p-4">
+                <div className="h-3 bg-slate-100 rounded w-2/3 mb-2" />
+                <div className="h-6 bg-slate-200 rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+          <div className="bg-white border border-slate-200 rounded p-6 space-y-3">
+            {[...Array(5)].map((_,i) => (
+              <div key={i} className="h-4 bg-slate-100 rounded" style={{width: `${80 - i*8}%`}} />
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
-  if (blad || !sesja) {
+  if (error || !session) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
         <div className="text-center">
           <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-          <p className="font-bold text-slate-700">{blad ?? 'Nie znaleziono sesji'}</p>
-          <Link to="/panel" className="text-sm text-blue-600 hover:underline mt-2 inline-block">← Wróć do panelu</Link>
+          <p className="font-bold text-slate-700">{error ?? 'Nie znaleziono sesji'}</p>
+          <Link to="/panel" className="text-sm text-[#B91C1C] hover:underline mt-2 inline-block">← Wróć do panelu</Link>
         </div>
       </div>
     );
   }
 
-  const punktyAgendy  = sesja.agendaItems ?? [];
-  const wszystkieGlosowania = punktyAgendy.flatMap(p => p.voting ?? []);
-  const zakonczone    = wszystkieGlosowania.filter(g => g.status === 'COMPLETED');
-  const uchwalone     = zakonczone.filter(g => {
+  const agendaItems  = session.agendaItems ?? [];
+  const allVotings = agendaItems.flatMap(p => p.voting ?? []);
+  const completedVotings    = allVotings.filter(g => g.status === 'COMPLETED');
+  const passedCount     = completedVotings.filter(g => {
     const za    = g.votes?.filter((v: any) => v.value === 'YES').length   ?? 0;
     const total = g.votes?.length ?? 0;
     return za > total / 2;
   }).length;
-  const odrzucone = zakonczone.length - uchwalone;
+  const rejectedCount = completedVotings.length - passedCount;
 
   return (
     <div className="min-h-screen bg-slate-50 print:bg-white">
@@ -83,8 +99,8 @@ export default function SessionSummary() {
           <Link to={`/sesja/${id}`} className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 font-medium transition">
             <ArrowLeft className="w-4 h-4" /> Szczegóły sesji
           </Link>
-          <button onClick={handleEksportPDF}
-            className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-800 border border-blue-200 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition">
+          <button onClick={handleExportPDF}
+            className="inline-flex items-center gap-2 text-sm font-bold text-[#B91C1C] hover:text-[#7F1D1D] border border-red-200 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-lg transition">
             <FileDown className="w-4 h-4" /> Eksport do PDF
           </button>
         </div>
@@ -94,16 +110,16 @@ export default function SessionSummary() {
       <div className="bg-white border-b border-slate-200 px-4 py-8 print:border-0">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-2 mb-3">
-            <Award className="w-4 h-4 text-blue-600" />
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest">Podsumowanie obrad</span>
+            <Award className="w-4 h-4 text-[#B91C1C]" />
+            <span className="text-xs font-bold text-[#B91C1C] uppercase tracking-widest">Podsumowanie obrad</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight mb-4">{sesja.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight mb-4">{session.title}</h1>
 
           <div className="flex flex-wrap gap-4 text-sm text-slate-500">
-            <span className="flex items-center gap-1.5"><CalendarDays className="w-4 h-4" />{formatujDate(sesja.scheduledAt)}</span>
-            <span className="flex items-center gap-1.5"><Clock    className="w-4 h-4" />{formatujCzas(sesja.scheduledAt)}</span>
-            <span className="flex items-center gap-1.5"><BarChart2 className="w-4 h-4" />Status: {STATUS_ETYKIETA[sesja.status] ?? sesja.status}</span>
-            {sesja.committee && <span className="flex items-center gap-1.5"><Users className="w-4 h-4" />{sesja.committee.name}</span>}
+            <span className="flex items-center gap-1.5"><CalendarDays className="w-4 h-4" />{formatDate(session.scheduledAt)}</span>
+            <span className="flex items-center gap-1.5"><Clock    className="w-4 h-4" />{formatTime(session.scheduledAt)}</span>
+            <span className="flex items-center gap-1.5"><BarChart2 className="w-4 h-4" />Status: {STATUS_LABEL[session.status] ?? session.status}</span>
+            {session.committee && <span className="flex items-center gap-1.5"><Users className="w-4 h-4" />{session.committee.name}</span>}
           </div>
         </div>
       </div>
@@ -113,16 +129,16 @@ export default function SessionSummary() {
         {/* Karty podsumowania */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { ikona: <FileText    className="w-5 h-5" />, etykieta: 'Punktów agendy',    wartosc: punktyAgendy.length,         bg: 'bg-slate-100',  tc: 'text-slate-600'    },
-            { ikona: <BarChart2   className="w-5 h-5" />, etykieta: 'Głosowań łącznie',  wartosc: wszystkieGlosowania.length,  bg: 'bg-blue-50',    tc: 'text-blue-600'     },
-            { ikona: <CheckCircle2 className="w-5 h-5" />, etykieta: 'Uchwał uchwalonych',wartosc: uchwalone,                   bg: 'bg-emerald-50', tc: 'text-emerald-600'  },
-            { ikona: <XCircle     className="w-5 h-5" />, etykieta: 'Odrzuconych',       wartosc: odrzucone,                   bg: 'bg-red-50',     tc: 'text-red-500'      },
+            { icon: <FileText    className="w-5 h-5" />, label: 'Punktów agendy',    value: agendaItems.length,         bg: 'bg-slate-100',  tc: 'text-slate-600'    },
+            { icon: <BarChart2   className="w-5 h-5" />, label: 'Głosowań łącznie',  value: allVotings.length,  bg: 'bg-red-50',    tc: 'text-[#B91C1C]'     },
+            { icon: <CheckCircle2 className="w-5 h-5" />, label: 'Uchwał uchwalonych',value: passedCount,                   bg: 'bg-emerald-50', tc: 'text-emerald-600'  },
+            { icon: <XCircle     className="w-5 h-5" />, label: 'Odrzuconych',       value: rejectedCount,                   bg: 'bg-red-50',     tc: 'text-red-500'      },
           ].map((s, i) => (
             <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${s.bg} ${s.tc}`}>{s.ikona}</div>
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${s.bg} ${s.tc}`}>{s.icon}</div>
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{s.etykieta}</p>
-                <p className="text-xl font-extrabold text-slate-900 leading-tight">{s.wartosc}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{s.label}</p>
+                <p className="text-xl font-extrabold text-slate-900 leading-tight">{s.value}</p>
               </div>
             </div>
           ))}
@@ -131,30 +147,30 @@ export default function SessionSummary() {
         {/* Agenda */}
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
           <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-blue-600" />
+            <FileText className="w-4 h-4 text-[#B91C1C]" />
             <h2 className="font-extrabold text-slate-900 text-sm">Porządek obrad</h2>
           </div>
-          {punktyAgendy.length === 0 ? (
+          {agendaItems.length === 0 ? (
             <div className="text-center py-10 text-slate-400 text-sm">Brak punktów agendy</div>
           ) : (
             <div className="divide-y divide-slate-50">
-              {punktyAgendy.sort((a, b) => a.order - b.order).map((punkt, i) => {
-                const glosowanie = punkt.voting?.[0];
-                const yes     = glosowanie?.votes?.filter((v: any) => v.value === 'YES').length    ?? 0;
-                const no      = glosowanie?.votes?.filter((v: any) => v.value === 'NO').length     ?? 0;
-                const abstain = glosowanie?.votes?.filter((v: any) => v.value === 'ABSTAIN').length ?? 0;
+              {agendaItems.sort((a, b) => a.order - b.order).map((item, i) => {
+                const voting = item.voting?.[0];
+                const yes     = voting?.votes?.filter((v: any) => v.value === 'YES').length    ?? 0;
+                const no      = voting?.votes?.filter((v: any) => v.value === 'NO').length     ?? 0;
+                const abstain = voting?.votes?.filter((v: any) => v.value === 'ABSTAIN').length ?? 0;
                 const total   = yes + no + abstain;
                 const uchwalona = total > 0 && yes > total / 2;
 
                 return (
-                  <div key={punkt.id} className="px-6 py-4">
+                  <div key={item.id} className="px-6 py-4">
                     <div className="flex items-start gap-3">
                       <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 text-xs font-extrabold flex items-center justify-center flex-shrink-0 mt-0.5">
                         {i + 1}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900">{punkt.title}</p>
-                        {glosowanie && glosowanie.status === 'COMPLETED' && (
+                        <p className="text-sm font-semibold text-slate-900">{item.title}</p>
+                        {voting && voting.status === 'COMPLETED' && (
                           <div className="mt-2">
                             <div className="flex h-2 rounded-full overflow-hidden bg-slate-100 gap-px mb-1.5">
                               <div className="bg-emerald-500 rounded-l-full" style={{ width: `${pct(yes, total)}%` }} />
@@ -174,7 +190,7 @@ export default function SessionSummary() {
                             </div>
                           </div>
                         )}
-                        {(!glosowanie || glosowanie.status !== 'COMPLETED') && (
+                        {(!voting || voting.status !== 'COMPLETED') && (
                           <p className="text-xs text-slate-400 mt-1">Bez głosowania</p>
                         )}
                       </div>
@@ -187,12 +203,12 @@ export default function SessionSummary() {
         </div>
 
         {/* Treść podsumowania z bazy */}
-        {sesja.summary && (
+        {session.summary && (
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
             <h2 className="font-extrabold text-slate-900 mb-4 flex items-center gap-2 text-sm">
-              <Award className="w-4 h-4 text-blue-600" /> Protokół z obrad
+              <Award className="w-4 h-4 text-[#B91C1C]" /> Protokół z obrad
             </h2>
-            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{sesja.summary.content}</p>
+            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{session.summary.content}</p>
           </div>
         )}
 

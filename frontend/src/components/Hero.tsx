@@ -1,70 +1,64 @@
-import { ArrowRight, Radio, FileText, Calendar } from 'lucide-react';
+import { ArrowRight, Radio, FileText, Calendar, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Hero() {
   return (
-    <div className="bg-slate-950 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+    <div className="bg-white">
 
-          {/* Lewa — treść */}
-          <div className="space-y-8">
-            <div className="space-y-5">
-              <h1 className="text-5xl sm:text-6xl font-black text-white tracking-tighter leading-[0.95] uppercase">
-                Rada<br />
-                <span className="text-blue-500">Gminy</span><br />
-                Online
-              </h1>
-              <p className="text-slate-400 text-lg leading-relaxed max-w-md font-light">
-                Transparentny dostęp do prac samorządu. Śledź głosowania, agendy sesji i uchwały Rady Gminy Nasza Gmina w czasie rzeczywistym.
-              </p>
-            </div>
+      {/* Breadcrumb */}
+      <div className="bg-slate-100 border-b border-slate-200 text-xs py-2 px-4">
+        <div className="max-w-6xl mx-auto flex items-center gap-2 text-slate-500">
+          <span>Urząd Gminy Nasza Gmina</span>
+          <ChevronRight className="w-3 h-3 opacity-40" />
+          <span>Rada Gminy</span>
+          <ChevronRight className="w-3 h-3 opacity-40" />
+          <span className="text-[#B91C1C] font-medium">System e-Sesja</span>
+        </div>
+      </div>
 
-            <div className="flex flex-wrap gap-3">
-              <a href="#glosowania"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl transition text-sm">
-                Rejestr głosowań <ArrowRight className="w-4 h-4" />
-              </a>
-              <Link to="/login"
-                className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 text-white font-bold px-6 py-3 rounded-xl transition text-sm">
-                Panel Radnego
-              </Link>
-            </div>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-16">
+        <div className="max-w-2xl space-y-6">
+          <div>
+            <p className="text-xs font-semibold text-[#B91C1C] uppercase tracking-widest mb-2">
+              System cyfrowej obsługi posiedzeń
+            </p>
+            <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
+              Rada Gminy<br />
+              <span className="text-[#B91C1C]">Nasza Gmina</span>
+            </h1>
+            <p className="text-slate-500 text-base mt-2">e-Sesja: Cyfrowa Rada Gminy</p>
           </div>
 
-          {/* Prawa — opis systemu */}
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 md:p-8 space-y-5">
-            <div className="flex items-center gap-3 pb-5 border-b border-slate-700">
-              <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center">
-                <Radio className="w-5 h-5 text-blue-400" />
-              </div>
-              <div>
-                <p className="text-xs font-bold text-blue-400 uppercase tracking-widest">System e-Sesja</p>
-                <p className="text-white font-extrabold text-lg leading-snug">Cyfrowa Rada Gminy</p>
-              </div>
-            </div>
+          <p className="text-slate-600 leading-relaxed text-sm">
+            Transparentny dostęp do prac samorządu. Śledź głosowania, agendy sesji
+            i uchwały w czasie rzeczywistym.
+          </p>
 
-            <div className="space-y-3 text-sm text-slate-300">
-              <div className="flex items-start gap-3">
-                <Radio className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                <span>Głosowania w czasie rzeczywistym dla radnych</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <FileText className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                <span>Publiczny rejestr uchwał i wyników głosowań</span>
-              </div>
-              <div className="flex items-start gap-3">
-                <Calendar className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-                <span>Kalendarz posiedzeń i archiwum sesji</span>
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-3">
+            <a href="#glosowania"
+              className="inline-flex items-center gap-2 bg-[#B91C1C] hover:bg-[#991B1B] text-white font-semibold px-5 py-2.5 rounded text-sm transition">
+              Rejestr głosowań <ArrowRight className="w-4 h-4" />
+            </a>
+            <Link to="/login"
+              className="inline-flex items-center gap-2 border border-[#B91C1C] text-[#B91C1C] hover:bg-red-50 font-semibold px-5 py-2.5 rounded text-sm transition">
+              Panel radnego
+            </Link>
+          </div>
 
-            <div className="pt-2 border-t border-slate-700">
-              <Link to="/login"
-                className="block w-full text-center bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition text-sm">
-                Zaloguj się do panelu radnego
-              </Link>
-            </div>
+          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-100">
+            {[
+              { icon: <Radio className="w-4 h-4" />,    label: 'Głosowania online',   desc: 'w czasie rzeczywistym' },
+              { icon: <FileText className="w-4 h-4" />, label: 'Rejestr uchwał',      desc: 'publiczny dostęp'      },
+              { icon: <Calendar className="w-4 h-4" />, label: 'Kalendarz posiedzeń', desc: 'wszystkie komisje'     },
+            ].map((item, i) => (
+              <div key={i} className="text-center">
+                <div className="w-9 h-9 bg-red-50 border border-red-100 rounded flex items-center justify-center mx-auto mb-2 text-[#B91C1C]">
+                  {item.icon}
+                </div>
+                <p className="text-xs font-semibold text-slate-700">{item.label}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
