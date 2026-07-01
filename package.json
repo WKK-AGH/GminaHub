@@ -7,6 +7,7 @@
     "init": "node ./scripts/init.js",
     "server": "npm run dev --prefix backend",
     "client": "npm run dev --prefix frontend",
+    "database": "node ./scripts/database.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "merge": "node ./scripts/merge.js"
   },
