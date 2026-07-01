@@ -167,7 +167,7 @@ export default function Features() {
                                 {g.status === 'w_trakcie' && (
                                     <Link
                                         to="/login"
-                                        className="flex-shrink-0 inline-flex items-center gap-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition whitespace-nowrap"
+                                        className="shrink-0 inline-flex items-center gap-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition whitespace-nowrap"
                                     >
                                         <Lock className="w-3 h-3" /> Zaloguj aby głosować
                                     </Link>
@@ -188,7 +188,7 @@ export default function Features() {
                     </div>
                     <Link
                         to="/login"
-                        className="flex-shrink-0 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl transition text-sm whitespace-nowrap"
+                        className="shrink-0 inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl transition text-sm whitespace-nowrap"
                     >
                         Panel Radnego <ArrowRight className="w-4 h-4" />
                     </Link>

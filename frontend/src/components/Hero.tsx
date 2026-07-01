@@ -97,21 +97,21 @@ export default function Hero() {
 
                             <div className="space-y-3 text-sm">
                                 <div className="flex items-center gap-3 text-slate-300">
-                                    <Clock className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                    <Clock className="w-4 h-4 text-blue-400 shrink-0" />
                                     <span className="font-semibold">28 maja 2026, godz. 10:00</span>
                                 </div>
                                 <div className="flex items-center gap-3 text-slate-300">
-                                    <MapPin className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                    <MapPin className="w-4 h-4 text-blue-400 shrink-0" />
                                     <span className="font-semibold">
                                         Główna Sala Konferencyjna (Ratusz)
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-3 text-slate-300">
-                                    <Users className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                    <Users className="w-4 h-4 text-blue-400 shrink-0" />
                                     <span className="font-semibold">17 radnych · Kworum: 9</span>
                                 </div>
                                 <div className="flex items-center gap-3 text-slate-300">
-                                    <FileText className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                                    <FileText className="w-4 h-4 text-blue-400 shrink-0" />
                                     <span className="font-semibold">8 punktów agendy</span>
                                 </div>
                             </div>
@@ -140,7 +140,7 @@ export default function Hero() {
                                                 key={point.id}
                                                 className="flex items-start gap-2.5 py-2 border-b border-slate-700/50 last:border-0"
                                             >
-                                                <span className="font-mono text-xs font-bold text-slate-500 mt-0.5 flex-shrink-0">
+                                                <span className="font-mono text-xs font-bold text-slate-500 mt-0.5 shrink-0">
                                                     {point.id}.
                                                 </span>
                                                 <p className="text-sm text-slate-300 leading-snug">

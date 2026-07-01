@@ -73,7 +73,7 @@ function VotingRow({ voting, index }: { voting: any; index: number }) {
                 onClick={() => setExpanded((v) => !v)}
                 className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-slate-50/60 transition"
             >
-                <span className="text-xs font-mono font-bold text-slate-400 flex-shrink-0 w-5">
+                <span className="text-xs font-mono font-bold text-slate-400 shrink-0 w-5">
                     {index + 1}.
                 </span>
                 <div className="flex-1 min-w-0">
@@ -82,7 +82,7 @@ function VotingRow({ voting, index }: { voting: any; index: number }) {
                     </p>
                     <StackedBar yes={yes} no={no} abstain={abstain} />
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
+                <div className="flex items-center gap-3 shrink-0">
                     <span
                         className={`text-sm font-extrabold tabular-nums ${passed ? 'text-emerald-600' : 'text-red-500'}`}
                     >
@@ -284,7 +284,7 @@ export default function SessionStatistics() {
                             className="bg-white border border-slate-200 rounded-xl p-5 flex items-start gap-4 shadow-sm"
                         >
                             <div
-                                className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${stat.bg} ${stat.tc}`}
+                                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${stat.bg} ${stat.tc}`}
                             >
                                 {stat.icon}
                             </div>
