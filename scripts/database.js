@@ -7,7 +7,7 @@ const postgresDir = path.join(__dirname, '..', 'postgres');
 const targetDataDir = path.join(postgresDir, 'data');
 const initSqlDir = path.join(postgresDir, 'init');
 const versionFilePath = path.join(targetDataDir, 'PG_VERSION');
-const logFilePath = path.join(postgresDir, 'server.log');
+const logFilePath = path.join(postgresDir, 'database.log');
 
 // 2. Ścieżki do binariów PostgreSQL 18
 const pgBinDir = `C:\\Program Files\\PostgreSQL\\18\\bin`;
