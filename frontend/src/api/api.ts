@@ -1,34 +1,40 @@
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api';
+export const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:5000';
 
-// ─── TYPES ────────────────────────────────────────────────────────────────────
+// ─── TYPY PODSTAWOWE ──────────────────────────────────────────────────────────
 
-export interface ApiError {
-  message: string;
-  status: number;
-}
+export interface ApiError { message: string; status: number; }
 
-export type UserRole = 'RADNY' | 'PRZEWODNICZACY' | 'ADMINISTRATOR';
+export type UserRole     = 'RADNY' | 'PRZEWODNICZACY' | 'ADMINISTRATOR';
+export type SessionStatus = 'PLANNED' | 'ACTIVE' | 'FINISHED';
+export type VotingStatus  = 'PENDING' | 'ACTIVE' | 'COMPLETED';
+export type VoteValue     = 'YES' | 'NO' | 'ABSTAIN';
 
 export const ROLE_LABEL: Record<UserRole, string> = {
-  RADNY:          'Councilor',
-  PRZEWODNICZACY: 'Chairman',
+  RADNY:          'Radny',
+  PRZEWODNICZACY: 'Przewodniczący',
   ADMINISTRATOR:  'Administrator',
 };
 
-export type VoteValue = 'YES' | 'NO' | 'ABSTAIN';
-
 export const VOTE_LABEL: Record<VoteValue, string> = {
-  YES:    'YES',
-  NO:     'NO',
-  ABSTAIN:'ABSTAIN',
+  YES:     'ZA',
+  NO:      'PRZECIW',
+  ABSTAIN: 'WSTRZYMUJĘ',
 };
 
-export type SessionStatus  = 'PLANNED' | 'ACTIVE' | 'FINISHED';
-export type VotingStatus   = 'PENDING' | 'ACTIVE' | 'COMPLETED';
+export const SESSION_STATUS_LABEL: Record<string, string> = {
+  PLANNED:  'Nadchodząca',
+  ACTIVE:   'W trakcie',
+  FINISHED: 'Zakończona',
+};
 
-// ─── USER ─────────────────────────────────────────────────────────────────────
+export const VOTING_STATUS_LABEL: Record<string, string> = {
+  PENDING:   'Oczekuje',
+  ACTIVE:    'Aktywne',
+  COMPLETED: 'Zakończone',
+};
+
+// ─── MODELE — Użytkownik ──────────────────────────────────────────────────────
 
 export interface UserResponse {
   id: string;
@@ -54,33 +60,19 @@ export function getInitials(user: UserResponse | UserListItem): string {
   return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
 }
 
-// ─── AUTH ─────────────────────────────────────────────────────────────────────
+// ─── MODELE — Auth ────────────────────────────────────────────────────────────
 
-export interface LoginPayload {
-  login: string;
-  password: string;
-}
-
-export interface LoginResponse {
-  success: boolean;
-  accessToken: string;
-  user: UserResponse;
-}
-
-export interface RefreshResponse {
-  success: boolean;
-  accessToken: string;
-}
+export interface LoginPayload    { login: string; password: string; }
+export interface LoginResponse   { success: boolean; accessToken: string; user: UserResponse; }
+export interface RefreshResponse { success: boolean; accessToken: string; }
 
 export interface RegisterPayload {
-  login: string;
-  password: string;
-  firstName: string;
-  lastName: string;
+  login: string; password: string;
+  firstName: string; lastName: string;
   role: UserRole;
 }
 
-// ─── SESSION ──────────────────────────────────────────────────────────────────
+// ─── MODELE — Sesja ───────────────────────────────────────────────────────────
 
 export interface Session {
   id: string;
@@ -99,7 +91,7 @@ export interface CreateSessionPayload {
   committeeId?: string;
 }
 
-// ─── AGENDA ITEM ──────────────────────────────────────────────────────────────
+// ─── MODELE — Punkt agendy ────────────────────────────────────────────────────
 
 export interface AgendaItem {
   id: string;
@@ -117,7 +109,7 @@ export interface SessionDocument {
   agendaItemId: string;
 }
 
-// ─── COMMITTEE ────────────────────────────────────────────────────────────────
+// ─── MODELE — Komisja ─────────────────────────────────────────────────────────
 
 export interface Committee {
   id: string;
@@ -133,7 +125,7 @@ export interface CommitteeMember {
   user?: UserListItem;
 }
 
-// ─── VOTING ───────────────────────────────────────────────────────────────────
+// ─── MODELE — Głosowanie ──────────────────────────────────────────────────────
 
 export interface Voting {
   id: string;
@@ -151,11 +143,9 @@ export interface Vote {
   user?: UserListItem;
 }
 
-export interface CastVotePayload {
-  value: VoteValue;
-}
+export interface CastVotePayload { value: VoteValue; }
 
-// ─── SUMMARY / LOG ────────────────────────────────────────────────────────────
+// ─── MODELE — Podsumowanie / Logi ─────────────────────────────────────────────
 
 export interface SessionSummary {
   id: string;
@@ -176,7 +166,6 @@ export interface SystemLog {
 // ─── TOKEN ────────────────────────────────────────────────────────────────────
 
 let _accessToken: string | null = null;
-
 export function setAccessToken(token: string | null) { _accessToken = token; }
 export function getAccessToken() { return _accessToken; }
 
@@ -186,12 +175,9 @@ let _refreshPromise: Promise<string | null> | null = null;
 
 async function refreshAccessToken(): Promise<string | null> {
   if (_refreshPromise) return _refreshPromise;
-  _refreshPromise = fetch(`${BASE_URL}/auth/refresh`, {
-    method: 'POST',
-    credentials: 'include',
-  })
+  _refreshPromise = fetch(`${BASE_URL}/auth/refresh`, { method: 'POST', credentials: 'include' })
     .then(async res => {
-      if (!res.ok) throw new Error('Refresh failed');
+      if (!res.ok) throw new Error('Refresh nieudany');
       const data: RefreshResponse = await res.json();
       setAccessToken(data.accessToken);
       return data.accessToken;
@@ -201,7 +187,7 @@ async function refreshAccessToken(): Promise<string | null> {
   return _refreshPromise;
 }
 
-// ─── HTTP CLIENT ──────────────────────────────────────────────────────────────
+// ─── KLIENT HTTP ──────────────────────────────────────────────────────────────
 
 async function apiFetch<T>(path: string, options: RequestInit = {}, retry = true): Promise<T> {
   const headers: Record<string, string> = {
@@ -216,12 +202,12 @@ async function apiFetch<T>(path: string, options: RequestInit = {}, retry = true
     const newToken = await refreshAccessToken();
     if (newToken) return apiFetch<T>(path, options, false);
     window.dispatchEvent(new CustomEvent('auth:logout'));
-    throw { message: 'Session expired. Please log in again.', status: 401 } as ApiError;
+    throw { message: 'Sesja wygasła. Zaloguj się ponownie.', status: 401 } as ApiError;
   }
 
   if (!res.ok) {
-    let message = `Error ${res.status}`;
-    try { const body = await res.json(); message = body.message ?? message; } catch { /* ignore */ }
+    let message = `Błąd ${res.status}`;
+    try { const body = await res.json(); message = body.message ?? message; } catch { /* ignoruj */ }
     throw { message, status: res.status } as ApiError;
   }
 
@@ -237,7 +223,7 @@ export const api = {
   delete: <T>(path: string)               => apiFetch<T>(path, { method: 'DELETE' }),
 };
 
-
+// ─── WRAPPER BACKENDU ─────────────────────────────────────────────────────────
 
 interface BackendResponse<T> { success: boolean; data: T; message?: string; }
 
@@ -255,16 +241,59 @@ export const authApi = {
   register: (payload: RegisterPayload) => apiFetch<{ success: boolean; user: UserResponse }>('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
 };
 
-// ─── SESSIONS API ─────────────────────────────────────────────────────────────
+// ─── SESJE API ────────────────────────────────────────────────────────────────
 
 export const sessionsApi = {
-  list:   ()                              => apiData<Session[]>('/sessions'),
-  getById:(id: string)                    => apiData<Session>(`/sessions/${id}`),
-  create: (payload: CreateSessionPayload) => apiData<Session>('/sessions', { method: 'POST', body: JSON.stringify(payload) }),
+  list:    ()                               => apiData<Session[]>('/sessions'),
+  getById: (id: string)                    => apiData<Session>(`/sessions/${id}`),
+  create:  (payload: CreateSessionPayload) => apiData<Session>('/sessions', { method: 'POST', body: JSON.stringify(payload) }),
 };
 
-// ─── USERS API ────────────────────────────────────────────────────────────────
+// ─── GŁOSOWANIA API ───────────────────────────────────────────────────────────
+
+export const votingsApi = {
+  start:   (votingId: string)                           => apiData<Voting>(`/votings/${votingId}/start`,   { method: 'PATCH' }),
+  end:     (votingId: string)                           => apiData<Voting>(`/votings/${votingId}/end`,     { method: 'PATCH' }),
+  vote:    (votingId: string, payload: CastVotePayload) => apiData<void>(`/votings/${votingId}/vote`,      { method: 'POST', body: JSON.stringify(payload) }),
+  results: (votingId: string)                           => apiData<Voting>(`/votings/${votingId}/results`),
+};
+
+// ─── UŻYTKOWNICY API ──────────────────────────────────────────────────────────
 
 export const usersApi = {
   list: () => apiData<UserListItem[]>('/users'),
+};
+
+// ─── DOKUMENTY API ────────────────────────────────────────────────────────────
+
+export const documentsApi = {
+  // Upload pliku do punktu agendy — wysyła FormData (multipart)
+  upload: async (agendaItemId: string, file: File): Promise<SessionDocument> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('title', file.name);
+
+    const token = getAccessToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`${BASE_URL}/agenda-items/${agendaItemId}/documents`, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: formData,
+    });
+
+    if (!res.ok) {
+      let message = `Błąd ${res.status}`;
+      try { const body = await res.json(); message = body.message ?? message; } catch { /* ignoruj */ }
+      throw { message, status: res.status } as ApiError;
+    }
+
+    const data = await res.json();
+    return data.data as SessionDocument;
+  },
+
+  // Usunięcie dokumentu
+  delete: (documentId: string) => apiData<void>(`/documents/${documentId}`, { method: 'DELETE' }),
 };

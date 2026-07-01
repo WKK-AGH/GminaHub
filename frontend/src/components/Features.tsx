@@ -122,7 +122,7 @@ export default function Features() {
     return (
         <div className="bg-slate-50">
             {/* ── REJESTR GŁOSOWAŃ ── */}
-            <section id="votings" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <section id="glosowania" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 {/* Nagłówek sekcji */}
                 <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
                     <div>
@@ -258,7 +258,7 @@ export default function Features() {
             </section>
 
             {/* ── ARCHIWUM NAGRAŃ ── */}
-            <section id="recordings" className="border-t border-slate-200 bg-slate-50 py-16">
+            <section id="nagrania" className="border-t border-slate-200 bg-slate-50 py-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
                         <div>
