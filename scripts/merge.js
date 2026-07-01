@@ -38,6 +38,20 @@ function checkCleanWorkingTree() {
     }
 }
 
+function colorizeStatus(status) {
+    const colors = {
+        ok: '\x1b[32m',
+        skipped: '\x1b[33m',
+        'dry-run': '\x1b[36m',
+        'switch-failed': '\x1b[31m',
+        'merge-failed': '\x1b[31m',
+        'push-failed': '\x1b[31m',
+    };
+
+    const color = colors[status] || '\x1b[37m';
+    return `${color}${status}\x1b[0m`;
+}
+
 const defaultTargets = ['backend', 'database', 'feature', 'frontend'];
 const args = process.argv.slice(2);
 let targets = defaultTargets;
@@ -100,5 +114,5 @@ console.log(`\nWracam na ${current}...`);
 if (!dryRun) run(`git switch ${current}`);
 
 console.log('\nPodsumowanie:');
-for (const r of results) console.log(`- ${r.target}: ${r.status}`);
+for (const r of results) console.log(`- ${r.target}: ${colorizeStatus(r.status)}`);
 console.log('\nGotowe.');

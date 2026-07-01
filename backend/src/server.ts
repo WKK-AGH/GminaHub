@@ -1,18 +1,18 @@
+import { errorHandler } from '@/middleware/errorHandler';
+import authRoutes from '@/modules/auth/auth.routes';
+import committeesRoutes from '@/modules/committees/committees.routes';
+import sessionsRoutes from '@/modules/sessions/sessions.routes';
+import usersRoutes from '@/modules/users/users.routes';
+import votingsRoutes from '@/modules/votings/votings.routes';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
-import { createServer } from 'http';
-import { Server } from 'socket.io';
-import { errorHandler } from '@/middleware/errorHandler';
-import authRoutes from '@/modules/auth/auth.routes';
-import sessionsRoutes from '@/modules/sessions/sessions.routes';
-import usersRoutes from '@/modules/users/users.routes';
-import votingsRoutes from '@/modules/votings/votings.routes';
-import committeesRoutes from '@/modules/committees/committees.routes';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import { initWebsockets } from './modules/votings/votings.websocket';
 
 dotenv.config();
@@ -41,8 +41,8 @@ const io = new Server(httpServer, {
     cors: {
         origin: frontendUrl,
         methods: ['GET', 'POST'],
-        credentials: true
-    }
+        credentials: true,
+    },
 });
 
 const limiter = rateLimit({
@@ -54,7 +54,7 @@ app.use('/api', limiter);
 
 app.get('/', (_req, res) => {
     res.status(200).json({
-        message: 'Witamy w API systemu e-Sesja: Cyfrowa Rada Gminy'
+        message: 'Witamy w API systemu e-Sesja: Cyfrowa Rada Gminy',
     });
 });
 
@@ -75,5 +75,5 @@ initWebsockets(io);
 
 // Zmieniamy app.listen na httpServer.listen
 httpServer.listen(PORT, () => {
-    console.log(`🚀 Serwer e-Sesja z obsługą WebSockets działa na porcie ${PORT}`);
+    console.log(`Serwer e-Sesja z obsługą WebSockets działa na porcie ${PORT}`);
 });

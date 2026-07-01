@@ -1,14 +1,13 @@
-import { Server, Socket } from 'socket.io';
 import { prisma } from '@/db/client';
-import { verifyAccessToken, TokenPayload } from '@/utils/helpers/jwt.helper';
+import { TokenPayload, verifyAccessToken } from '@/utils/helpers/jwt.helper';
+import { Server, Socket } from 'socket.io';
 
 // Rozszerzamy typ Socket o zdekodowany payload tokena, aby móc łatwo z niego korzystać
 interface AuthenticatedSocket extends Socket {
-  user?: TokenPayload;
+    user?: TokenPayload;
 }
 
 export const initWebsockets = (io: Server) => {
-
     // MIDDLEWARE: Sprawdzenie tokenu JWT przed dopuszczeniem do połączenia
     io.use((socket: AuthenticatedSocket, next) => {
         // Front przekazuje token w obiekcie auth: { token: '...' }
@@ -29,21 +28,23 @@ export const initWebsockets = (io: Server) => {
     });
 
     io.on('connection', (socket: AuthenticatedSocket) => {
-        console.log(`🔌 Bezpieczne połączenie WS nawiązane: ${socket.id} (Użytkownik: ${socket.user?.userId})`);
+        console.log(
+            `Bezpieczne połączenie WS nawiązane: ${socket.id} (Użytkownik: ${socket.user?.userId})`,
+        );
 
         // 1. Dołączenie do pokoju konkretnej sesji (używamy już bezpiecznego userId z tokenu)
         socket.on('join_session', async ({ sessionId }) => {
             const userId = socket.user?.userId;
 
             socket.join(`session_${sessionId}`);
-            console.log(`👤 Użytkownik ${userId} dołączył do pokoju sesji: session_${sessionId}`);
+            console.log(`Użytkownik ${userId} dołączył do pokoju sesji: session_${sessionId}`);
 
             const activeVoting = await prisma.voting.findFirst({
                 where: {
                     agendaItem: { sessionId: sessionId },
-                    status: 'ACTIVE'
+                    status: 'ACTIVE',
                 },
-                include: { votes: true }
+                include: { votes: true },
             });
 
             if (activeVoting) {
@@ -62,7 +63,7 @@ export const initWebsockets = (io: Server) => {
                 const updatedVoting = await prisma.voting.update({
                     where: { id: votingId },
                     data: { status: 'ACTIVE' },
-                    include: { votes: true }
+                    include: { votes: true },
                 });
 
                 io.to(`session_${sessionId}`).emit('voting_started', updatedVoting);
@@ -79,21 +80,21 @@ export const initWebsockets = (io: Server) => {
             try {
                 await prisma.vote.upsert({
                     where: {
-                        votingId_userId: { votingId, userId }
+                        votingId_userId: { votingId, userId },
                     },
                     update: { value },
-                    create: { votingId, userId, value }
+                    create: { votingId, userId, value },
                 });
 
                 const allVotes = await prisma.vote.findMany({
-                    where: { votingId }
+                    where: { votingId },
                 });
 
                 const results = {
-                    yes: allVotes.filter(v => v.value === 'YES').length,
-                    no: allVotes.filter(v => v.value === 'NO').length,
-                    abstain: allVotes.filter(v => v.value === 'ABSTAIN').length,
-                    total: allVotes.length
+                    yes: allVotes.filter((v) => v.value === 'YES').length,
+                    no: allVotes.filter((v) => v.value === 'NO').length,
+                    abstain: allVotes.filter((v) => v.value === 'ABSTAIN').length,
+                    total: allVotes.length,
                 };
 
                 io.to(`session_${sessionId}`).emit('vote_updated', { votingId, results });
@@ -114,7 +115,7 @@ export const initWebsockets = (io: Server) => {
                 const finalizedVoting = await prisma.voting.update({
                     where: { id: votingId },
                     data: { status: 'COMPLETED' },
-                    include: { votes: true }
+                    include: { votes: true },
                 });
 
                 io.to(`session_${sessionId}`).emit('voting_completed', finalizedVoting);
@@ -125,7 +126,7 @@ export const initWebsockets = (io: Server) => {
         });
 
         socket.on('disconnect', () => {
-            console.log(`❌ Rozłączono bezpieczny socket: ${socket.id}`);
+            console.log(`Rozłączono bezpieczny socket: ${socket.id}`);
         });
     });
 };
