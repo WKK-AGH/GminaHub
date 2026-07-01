@@ -1,4 +1,7 @@
 {
+  "name": "gminahub",
+  "version": "1.0.0",
+  "type": "module",
   "workspaces": [
     "frontend",
     "backend"
@@ -7,7 +10,7 @@
     "init": "node ./scripts/init.js",
     "server": "npm run dev --prefix backend",
     "client": "npm run dev --prefix frontend",
-    "database": "node ./scripts/database.js",
+    "database": "node ./scripts/database.cjs",
     "dev": "concurrently \"npm run database\" \"npm run server\" \"npm run client\"",
     "merge": "node ./scripts/merge.js"
   },

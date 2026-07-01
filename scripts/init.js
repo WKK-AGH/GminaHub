@@ -1,12 +1,14 @@
 import { spawnSync } from 'child_process';
+import fs from 'fs';
 import os from 'os';
 import path from 'path';
+
+const __dirname = import.meta.dirname;
 
 function run(command, args, options = {}) {
     let result;
 
     if (process.platform === 'win32') {
-        // Na Windows: konstruuj pojedynczy command string z shell: true
         const fullCommand = [command, ...args]
             .map((arg) => (arg.includes(' ') ? `"${arg}"` : arg))
             .join(' ');
@@ -16,7 +18,6 @@ function run(command, args, options = {}) {
             ...options,
         });
     } else {
-        // Na innych systemach: użyj args array z shell: false (bezpieczniej)
         result = spawnSync(command, args, {
             stdio: 'inherit',
             shell: false,
@@ -49,6 +50,41 @@ function commandExists(command) {
     return result.status === 0;
 }
 
+function checkAndFixAudit(prefix = null) {
+    const args = ['audit'];
+    if (prefix) {
+        args.push('--prefix', prefix);
+    }
+
+    let auditCheck;
+    if (process.platform === 'win32') {
+        const fullCommand = ['npm', ...args]
+            .map((arg) => (arg.includes(' ') ? `"${arg}"` : arg))
+            .join(' ');
+
+        auditCheck = spawnSync(fullCommand, { stdio: 'pipe', shell: true });
+    } else {
+        auditCheck = spawnSync('npm', args, { stdio: 'pipe', shell: false });
+    }
+
+    const output = auditCheck.stdout ? auditCheck.stdout.toString() : '';
+
+    if (output.includes('vulnerabilities') && !output.includes('0 vulnerabilities')) {
+        const target = prefix ? `w ${prefix}` : 'w root';
+        console.log(
+            '\x1b[33m%s\x1b[0m',
+            `> Wykryto podatnosci ${target}. Uruchamianie npm audit fix...\n`,
+        );
+
+        const fixArgs = ['audit', 'fix'];
+        if (prefix) {
+            fixArgs.push('--prefix', prefix);
+        }
+
+        run('npm', fixArgs);
+    }
+}
+
 function hasDocker() {
     return commandExists('docker');
 }
@@ -61,20 +97,23 @@ function hasDockerCompose() {
 }
 
 function installDependencies() {
-    console.log('\n> Instalowanie zależności w root...');
+    console.log('\x1b[34m%s\x1b[0m', '\n> Instalowanie zaleznosci w root...');
     if (!run('npm', ['install'])) {
-        throw new Error('Instalacja zależności w root nie powiodła się.');
+        throw new Error('Instalacja zaleznosci w root nie powiodla sie.');
     }
+    checkAndFixAudit();
 
-    console.log('\n> Instalowanie zależności w frontend...');
+    console.log('\x1b[34m%s\x1b[0m', '\n> Instalowanie zaleznosci w frontend...');
     if (!run('npm', ['install', '--prefix', 'frontend'])) {
-        throw new Error('Instalacja zależności w frontend nie powiodła się.');
+        throw new Error('Instalacja zaleznosci w frontend nie powiodla sie.');
     }
+    checkAndFixAudit('frontend');
 
-    console.log('\n> Instalowanie zależności w backend...');
+    console.log('\x1b[34m%s\x1b[0m', '\n> Instalowanie zaleznosci w backend...');
     if (!run('npm', ['install', '--prefix', 'backend'])) {
-        throw new Error('Instalacja zależności w backend nie powiodła się.');
+        throw new Error('Instalacja zaleznosci w backend nie powiodla sie.');
     }
+    checkAndFixAudit('backend');
 }
 
 function installDockerDesktopWindows() {
@@ -82,8 +121,9 @@ function installDockerDesktopWindows() {
         return run('winget', ['install', '--id', 'Docker.DockerDesktop', '-e']);
     }
 
-    console.warn(
-        'Nie znaleziono winget. Proszę zainstalować Docker Desktop ręcznie z https://www.docker.com/get-started',
+    console.log(
+        '\x1b[31m%s\x1b[0m',
+        'Nie znaleziono winget. Proszę zainstalować Docker Desktop ręcznie z https://www.docker.com/get-started\n',
     );
     return false;
 }
@@ -93,8 +133,9 @@ function installDockerMac() {
         return run('brew', ['install', '--cask', 'docker']);
     }
 
-    console.warn(
-        'Nie znaleziono Homebrew. Proszę zainstalować Docker ręcznie lub zainstalować Homebrew i spróbować ponownie.',
+    console.log(
+        '\x1b[31m%s\x1b[0m',
+        'Nie znaleziono Homebrew. Proszę zainstalować Docker ręcznie lub zainstalować Homebrew i spróbować ponownie.\n',
     );
     return false;
 }
@@ -119,19 +160,22 @@ function installDockerLinux() {
         return run('sudo', ['pacman', '-Syu', 'docker', 'docker-compose']);
     }
 
-    console.warn('Nieznany system Linux. Proszę zainstalować Docker ręcznie.');
+    console.log(
+        '\x1b[31m%s\x1b[0m',
+        'Nieznany system Linux. Proszę zainstalować Docker ręcznie.\n',
+    );
     return false;
 }
 
 function installDocker() {
-    console.log('\n> Sprawdzanie instalacji Docker i Docker Compose...');
+    console.log('\x1b[34m%s\x1b[0m', '\n> Sprawdzanie instalacji Docker i Docker Compose...\n');
 
     if (hasDocker() && hasDockerCompose()) {
-        console.log('Docker i Docker Compose są już zainstalowane.');
+        console.log('Docker i Docker Compose są już zainstalowane.\n');
         return true;
     }
 
-    console.log('Docker lub Docker Compose nie są zainstalowane. Próbuję zainstalować...');
+    console.log('Docker lub Docker Compose nie są zainstalowane. Próbuję zainstalować...\n');
 
     const platform = os.platform();
     let installed = false;
@@ -145,64 +189,86 @@ function installDocker() {
     }
 
     if (!installed) {
-        console.warn('\nAutomatyczna instalacja Docker nie powiodła się.');
-        console.warn(
-            'Proszę zainstalować Docker i Docker Compose ręcznie: https://www.docker.com/get-started',
+        console.log('\x1b[31m%s\x1b[0m', '\nAutomatyczna instalacja Docker nie powiodła się.\n');
+        console.log(
+            '\x1b[31m%s\x1b[0m',
+            'Proszę zainstalować Docker i Docker Compose ręcznie: https://www.docker.com/get-started\n',
         );
         return false;
     }
 
     if (!hasDocker() || !hasDockerCompose()) {
-        console.warn('\nDocker został zainstalowany, ale nie udało się potwierdzić wersji.');
-        console.warn('Sprawdź, czy Docker działa poprawnie i spróbuj ponownie.');
+        console.log(
+            '\x1b[31m%s\x1b[0m',
+            '\nDocker został zainstalowany, ale nie udało się potwierdzić wersji.\n',
+        );
+        console.log(
+            '\x1b[31m%s\x1b[0m',
+            'Sprawdź, czy Docker działa poprawnie i spróbuj ponownie.\n',
+        );
         return false;
     }
 
-    console.log('Docker i Docker Compose zostały zainstalowane pomyślnie.');
+    console.log('Docker i Docker Compose zostały zainstalowane pomyślnie.\n');
     return true;
 }
 
 function installVscodeExtensions() {
-    console.log('\n> Sprawdzanie instalacji rozszerzeń VS Code...');
+    console.log('\x1b[34m%s\x1b[0m', '\n> Sprawdzanie instalacji rozszerzeń VS Code...\n');
 
     if (!commandExists('code')) {
-        console.warn('VS Code nie jest zainstalowany lub nie jest dostępny w PATH.');
-        console.warn(
-            'Proszę zainstalować VS Code i dodać go do PATH, aby zainstalować rozszerzenia.',
+        console.log(
+            '\x1b[34m%s\x1b[0m',
+            'VS Code nie jest zainstalowany lub nie jest dostępny w PATH.\n',
+        );
+        console.log(
+            '\x1b[34m%s\x1b[0m',
+            'Proszę zainstalować VS Code i dodać go do PATH, aby zainstalować rozszerzenia.\n',
         );
         return false;
     }
 
     try {
         const extensionsPath = path.join(__dirname, '..', '.vscode', 'extensions.json');
-        const extensionsData = require(extensionsPath);
+        const extensionsData = JSON.parse(fs.readFileSync(extensionsPath, 'utf8'));
 
         if (!extensionsData.recommendations || !Array.isArray(extensionsData.recommendations)) {
-            console.warn('Nie znaleziono rekomendacji rozszerzeń w .vscode/extensions.json');
+            console.log(
+                '\x1b[34m%s\x1b[0m',
+                'Nie znaleziono rekomendacji rozszerzeń w .vscode/extensions.json\n',
+            );
             return false;
         }
 
+        const extensions = extensionsData.recommendations;
         console.log(
-            `Znaleziono ${extensionsData.recommendations.length} rekomendowanych rozszerzeń.`,
+            '\x1b[36m%s\x1b[0m',
+            `Znaleziono ${extensions.length} rekomendowanych rozszerzeń. Rozpoczynanie instalacji zbiorczej...\n`,
         );
 
-        let installed = 0;
-        let failed = 0;
-
-        for (const extension of extensionsData.recommendations) {
-            console.log(`Instalowanie rozszerzenia: ${extension}...`);
-            if (run('code', ['--install-extension', extension, '--force'])) {
-                installed++;
-            } else {
-                console.warn(`Nie udało się zainstalować rozszerzenia: ${extension}`);
-                failed++;
-            }
+        const args = [];
+        for (const extension of extensions) {
+            args.push('--install-extension', extension);
         }
+        args.push('--force');
 
-        console.log(`Zainstalowano ${installed} rozszerzeń. Niepowodzeń: ${failed}.`);
-        return failed === 0;
+        const success = run('code', args, {
+            env: { ...process.env, NODE_OPTIONS: '--no-deprecation' },
+        });
+
+        if (success) {
+            console.log('Wszystkie rozszerzenia zostały pomyślnie zainstalowane.\n');
+            return true;
+        } else {
+            console.log('\x1b[34m%s\x1b[0m', 'Wystąpił problem podczas instalacji rozszerzeń.\n');
+            return false;
+        }
     } catch (error) {
-        console.warn('Błąd podczas instalacji rozszerzeń VS Code:', error.message);
+        console.log(
+            '\x1b[34m%s\x1b[0m',
+            'Błąd podczas instalacji rozszerzeń VS Code:\n',
+            error.message,
+        );
         return false;
     }
 }
@@ -212,9 +278,9 @@ function main() {
         installDependencies();
         installDocker();
         installVscodeExtensions();
-        console.log('\n> Inicjalizacja zakończona.');
+        console.log('\x1b[34m%s\x1b[0m', '\n> Inicjalizacja zakończona.\n');
     } catch (error) {
-        console.error('\nBłąd podczas inicjalizacji:', error.message || error);
+        console.error('\x1b[31m%s\x1b[0m', '\nBłąd podczas inicjalizacji:', error.message || error);
         process.exit(1);
     }
 }
