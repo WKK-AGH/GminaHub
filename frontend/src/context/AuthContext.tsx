@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import { authApi, setAccessToken, type UserRole, type UserResponse, getFullName, getInitials } from '../api/api';
 
 export interface CurrentUser {
-  id: string; login?: string;
+  id: string; email?: string;
   firstName: string; lastName: string;
   fullName: string; initials: string;
   role: UserRole;
@@ -11,7 +11,7 @@ export interface CurrentUser {
 interface AuthContextType {
   currentUser: CurrentUser | null;
   isLoading: boolean;
-  login: (login: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   hasRole: (...roles: UserRole[]) => boolean;
 }
@@ -19,7 +19,7 @@ interface AuthContextType {
 function mapUser(user: UserResponse): CurrentUser {
   return {
     id: user.id,
-    login: user.login,
+    email: user.login,
     firstName: user.firstName,
     lastName: user.lastName,
     fullName: getFullName(user),
@@ -30,17 +30,17 @@ function mapUser(user: UserResponse): CurrentUser {
 
 // Fallback accounts used when backend is unavailable (demo / development)
 const MOCK_USERS: Record<string, { password: string; user: UserResponse }> = {
-  'admin': {
+  'admin@nasza-gmina.pl': {
     password: 'Admin123!',
-    user: { id: '1', firstName: 'Administrator', lastName: '', role: 'ADMINISTRATOR', login: 'admin' },
+    user: { id: '1', firstName: 'Administrator', lastName: '', role: 'ADMINISTRATOR', login: 'admin@nasza-gmina.pl' },
   },
-  'radny': {
+  'radny@nasza-gmina.pl': {
     password: 'Radny123!',
-    user: { id: '2', firstName: 'Jan', lastName: 'Kowalski', role: 'RADNY', login: 'radny' },
+    user: { id: '2', firstName: 'Jan', lastName: 'Kowalski', role: 'RADNY', login: 'radny@nasza-gmina.pl' },
   },
-  'przewodniczacy': {
+  'przewodniczacy@nasza-gmina.pl': {
     password: 'Przew123!',
-    user: { id: '3', firstName: 'Anna', lastName: 'Wiśniewska', role: 'PRZEWODNICZACY', login: 'przewodniczacy' },
+    user: { id: '3', firstName: 'Anna', lastName: 'Wiśniewska', role: 'PRZEWODNICZACY', login: 'przewodniczacy@nasza-gmina.pl' },
   },
 };
 
@@ -62,10 +62,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('auth:logout', handler);
   }, []);
 
-  const login = useCallback(async (loginStr: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     // Try real backend first
     try {
-      const res = await authApi.login({ login: loginStr, password });
+      const res = await authApi.login({ email, password });
       if (res.success) {
         setAccessToken(res.accessToken);
         setCurrentUser(mapUser(res.user));
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // Mock fallback
-    const mock = MOCK_USERS[loginStr];
+    const mock = MOCK_USERS[email];
     if (mock && mock.password === password) {
       setCurrentUser(mapUser(mock.user));
       return;

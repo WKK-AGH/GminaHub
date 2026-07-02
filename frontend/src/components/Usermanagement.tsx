@@ -18,7 +18,7 @@ import { authApi, ROLE_LABEL, usersApi, type UserListItem, type UserRole } from 
 // ─── TYPY ────────────────────────────────────────────────────────────────────
 
 interface NewUserForm {
-    login: string;
+    email: string;
     password: string;
     firstName: string;
     lastName: string;
@@ -26,7 +26,7 @@ interface NewUserForm {
 }
 
 const EMPTY_FORM: NewUserForm = {
-    login: '',
+    email: '',
     password: '',
     firstName: '',
     lastName: '',
@@ -101,8 +101,8 @@ export default function UserManagement() {
     };
 
     const validate = (): string | null => {
-        if (!form.login.trim()) return 'Login jest wymagany';
-        if (form.login.length < 3) return 'Login musi mieć co najmniej 3 znaki';
+        if (!form.email.trim()) return 'Email jest wymagany';
+        if (!form.email.includes('@')) return 'Podaj prawidłowy adres e-mail';
         if (!form.firstName.trim()) return 'Imię jest wymagane';
         if (!form.lastName.trim()) return 'Nazwisko jest wymagane';
         if (!form.password.trim()) return 'Hasło jest wymagane';
@@ -122,7 +122,7 @@ export default function UserManagement() {
         setFormError(null);
         try {
             await authApi.register({
-                login: form.login.trim(),
+                email: form.email.trim(),
                 password: form.password,
                 firstName: form.firstName.trim(),
                 lastName: form.lastName.trim(),
@@ -143,7 +143,7 @@ export default function UserManagement() {
     const filtered = users.filter((u) => {
         const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
         const q = search.toLowerCase();
-        return fullName.includes(q) || u.login.includes(q);
+        return fullName.includes(q) || (u.login ?? '').includes(q);
     });
 
     const countByRole = (role: UserRole) => users.filter((u) => u.role.name === role).length;
@@ -265,13 +265,11 @@ export default function UserManagement() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                                    Login *
-                                </label>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Adres e-mail *</label>
                                 <input
                                     type="text"
-                                    value={form.login}
-                                    onChange={(e) => handleField('login', e.target.value)}
+                                    value={form.email}
+                                    onChange={(e) => handleField('email', e.target.value)}
                                     placeholder="np. jkowalski"
                                     required
                                     minLength={3}
@@ -449,7 +447,7 @@ export default function UserManagement() {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3 text-slate-500 font-mono text-xs">
-                                                {user.login}
+                                                {user.email ?? user.login}
                                             </td>
                                             <td className="px-4 py-3">
                                                 <span

@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
-    const [loginValue, setLoginValue] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -22,14 +22,14 @@ export default function Login() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!loginValue.trim() || !password.trim()) {
+        if (!email.trim() || !password.trim()) {
             setError('Wypełnij wszystkie pola');
             return;
         }
         setError('');
         setLoading(true);
         try {
-            await login(loginValue, password);
+            await login(email, password);
             navigate(from === '/login' ? '/panel' : from, { replace: true });
         } catch (err: unknown) {
             setError((err as { message?: string })?.message ?? 'Błąd logowania');
@@ -60,15 +60,15 @@ export default function Login() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                                Login
+                                Adres e-mail
                             </label>
                             <input
-                                type="text"
-                                placeholder="Wprowadź login"
-                                value={loginValue}
-                                onChange={(e) => setLoginValue(e.target.value)}
+                                type="email"
+                                placeholder="Wprowadź adres e-mail"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 required
-                                autoComplete="username"
+                                autoComplete="email"
                                 className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded focus:outline-none focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C]"
                             />
                         </div>
