@@ -6,28 +6,28 @@ import { logger } from '@/utils/logger';
 
 export const login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { login: userLogin, password } = req.body;
+    const { email, password } = req.body;
 
     const user = await prisma.user.findUnique({
-      where: { login: userLogin },
+      where: { email },
       include: { role: true }
     });
 
     if (!user) {
-      logger.warn(`Nieudana próba logowania na login: ${userLogin} (Brak użytkownika)`);
-      res.status(401).json({ success: false, message: 'Nieprawidłowy login lub hasło' });
+      logger.warn(`Nieudana próba logowania na email: ${email} (Brak użytkownika)`);
+      res.status(401).json({ success: false, message: 'Nieprawidłowy email lub hasło' });
       return;
     }
 
-    const isPasswordValid = await comparePassword(password, user.password);
+    const isPasswordValid = await comparePassword(password, user.passwordHash);
     if (!isPasswordValid) {
-      logger.warn(`Nieudana próba logowania dla użytkownika: ${userLogin} (Błędne hasło)`);
-      res.status(401).json({ success: false, message: 'Nieprawidłowy login lub hasło' });
+      logger.warn(`Nieudana próba logowania dla użytkownika: ${email} (Błędne hasło)`);
+      res.status(401).json({ success: false, message: 'Nieprawidłowy email lub hasło' });
       return;
     }
 
     const { accessToken, refreshToken } = generateTokens({
-      userId: user.id,
+      userId: user.id.toString(),
       role: user.role.name
     });
 
@@ -35,10 +35,15 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 dni
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    logger.info(`Użytkownik ${user.login} (${user.role.name}) zalogował się pomyślnie.`);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() }
+    });
+
+    logger.info(`Użytkownik ${user.email} (${user.role.name}) zalogował się pomyślnie.`);
 
     res.status(200).json({
       success: true,
@@ -47,6 +52,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
         id: user.id,
         firstName: user.firstName,
         lastName: user.lastName,
+        email: user.email,
         role: user.role.name
       }
     });
@@ -83,13 +89,20 @@ export const refresh = async (req: Request, res: Response, next: NextFunction): 
     }
 
     const decoded = verifyRefreshToken(refreshToken);
-    if (!decoded) {
+    if (!decoded || !decoded.userId) {
       res.status(401).json({ success: false, message: 'Nieprawidłowy lub wygasły token odświeżania' });
       return;
     }
 
+    const numericUserId = parseInt(decoded.userId.toString(), 10);
+
+    if (isNaN(numericUserId)) {
+      res.status(401).json({ success: false, message: 'Nieprawidłowy format identyfikatora w tokenie' });
+      return;
+    }
+
     const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
+      where: { id: numericUserId },
       include: { role: true }
     });
 
@@ -99,7 +112,7 @@ export const refresh = async (req: Request, res: Response, next: NextFunction): 
     }
 
     const tokens = generateTokens({
-      userId: user.id,
+      userId: user.id.toString(),
       role: user.role.name
     });
 
@@ -122,14 +135,14 @@ export const refresh = async (req: Request, res: Response, next: NextFunction): 
 
 export const register = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { login: userLogin, password, firstName, lastName, role: roleName } = req.body;
+    const { email, password, firstName, lastName, role: roleName } = req.body;
 
     const existingUser = await prisma.user.findUnique({
-      where: { login: userLogin }
+      where: { email }
     });
 
     if (existingUser) {
-      res.status(400).json({ success: false, message: 'Użytkownik o podanym loginie już istnieje' });
+      res.status(400).json({ success: false, message: 'Użytkownik o podanym adresie email już istnieje' });
       return;
     }
 
@@ -146,8 +159,8 @@ export const register = async (req: Request, res: Response, next: NextFunction):
 
     const newUser = await prisma.user.create({
       data: {
-        login: userLogin,
-        password: hashedPassword,
+        email,
+        passwordHash: hashedPassword,
         firstName,
         lastName,
         roleId: role.id
@@ -157,14 +170,14 @@ export const register = async (req: Request, res: Response, next: NextFunction):
       }
     });
 
-    logger.info(`Administrator pomyślnie zarejestrował nowego użytkownika: ${newUser.login} (Rola: ${newUser.role.name})`);
+    logger.info(`Administrator pomyślnie zarejestrował nowego użytkownika: ${newUser.email} (Rola: ${newUser.role.name})`);
 
     res.status(201).json({
       success: true,
       message: 'Użytkownik zarejestrowany pomyślnie',
       user: {
         id: newUser.id,
-        login: newUser.login,
+        email: newUser.email,
         firstName: newUser.firstName,
         lastName: newUser.lastName,
         role: newUser.role.name

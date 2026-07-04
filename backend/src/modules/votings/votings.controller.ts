@@ -1,12 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '@/db/client';
 import { logger } from '@/utils/logger';
+import { VotingStatus } from '@prisma/client';
 
 // PATCH /api/votings/:id/start - Aktywacja głosowania
 export const startVoting = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   try {
-    // 1. Gwarantujemy TypeScriptowi, że id to czysty string
-    const id = req.params.id as string;
+    const paramId = req.params.id ? req.params.id.toString() : '';
+    const id = parseInt(paramId, 10);
+
+    if (isNaN(id)) {
+      return res.status(400).json({ success: false, message: 'Identyfikator głosowania musi być liczbą.' });
+    }
 
     const voting = await prisma.voting.findUnique({
       where: { id },
@@ -17,10 +22,10 @@ export const startVoting = async (req: Request, res: Response, next: NextFunctio
       return res.status(404).json({ success: false, message: 'Nie znaleziono głosowania.' });
     }
 
-    // 2. Bezpieczna weryfikacja za pomocą agendaItemId, który istnieje bezpośrednio w modelu Voting
+    // Weryfikacja czy w tej sesji trwa już inne otwarte (OPEN) głosowanie
     const activeVotingExist = await prisma.voting.findFirst({
       where: {
-        status: 'ACTIVE',
+        status: VotingStatus.OPEN,
         agendaItem: {
           id: voting.agendaItemId
         }
@@ -31,10 +36,9 @@ export const startVoting = async (req: Request, res: Response, next: NextFunctio
       return res.status(400).json({ success: false, message: 'W tej sesji trwa już inne aktywne głosowanie.' });
     }
 
-    // 3. Zmiana statusu na ACTIVE
     const updatedVoting = await prisma.voting.update({
       where: { id },
-      data: { status: 'ACTIVE' }
+      data: { status: VotingStatus.OPEN }
     });
 
     logger.info(`Głosowanie aktywowane: ${updatedVoting.title} (ID: ${updatedVoting.id})`);
@@ -52,7 +56,12 @@ export const startVoting = async (req: Request, res: Response, next: NextFunctio
 // PATCH /api/votings/:id/end - Zakończenie głosowania
 export const endVoting = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   try {
-    const id = req.params.id as string;
+    const paramId = req.params.id ? req.params.id.toString() : '';
+    const id = parseInt(paramId, 10);
+
+    if (isNaN(id)) {
+      return res.status(400).json({ success: false, message: 'Identyfikator głosowania musi być liczbą.' });
+    }
 
     const voting = await prisma.voting.findUnique({ where: { id } });
 
@@ -62,7 +71,7 @@ export const endVoting = async (req: Request, res: Response, next: NextFunction)
 
     const finalizedVoting = await prisma.voting.update({
       where: { id },
-      data: { status: 'COMPLETED' }
+      data: { status: VotingStatus.CLOSED }
     });
 
     logger.info(`Głosowanie zakończone: ${finalizedVoting.title} (ID: ${finalizedVoting.id})`);

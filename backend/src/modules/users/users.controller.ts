@@ -7,9 +7,11 @@ export const getAllUsers = async (_req: Request, res: Response, next: NextFuncti
     const users = await prisma.user.findMany({
       select: {
         id: true,
-        login: true,
+        email: true,
         firstName: true,
         lastName: true,
+        isActive: true,
+        createdAt: true,
         role: {
           select: {
             name: true
