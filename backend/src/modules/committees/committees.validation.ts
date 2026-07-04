@@ -9,8 +9,8 @@ export const createCommitteeSchema = Joi.object({
 });
 
 export const addMemberSchema = Joi.object({
-  userId: Joi.string().uuid().required().messages({
-    'string.uuid': 'Niepoprawny identyfikator użytkownika',
+  userId: Joi.number().integer().positive().required().messages({
+    'number.base': 'Niepoprawny identyfikator użytkownika. Musi być liczbą.',
     'any.required': 'Identyfikator użytkownika jest wymagany',
   }),
 });
