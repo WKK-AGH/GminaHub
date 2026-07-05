@@ -42,11 +42,13 @@ export interface UserResponse {
   lastName: string;
   role: UserRole;
   login?: string;
+  email?: string;
 }
 
 export interface UserListItem {
   id: string;
   login: string;
+  email?: string;
   firstName: string;
   lastName: string;
   role: { name: UserRole };
@@ -62,12 +64,12 @@ export function getInitials(user: UserResponse | UserListItem): string {
 
 // ─── MODELE — Auth ────────────────────────────────────────────────────────────
 
-export interface LoginPayload    { login: string; password: string; }
+export interface LoginPayload    { email: string; password: string; }
 export interface LoginResponse   { success: boolean; accessToken: string; user: UserResponse; }
 export interface RefreshResponse { success: boolean; accessToken: string; }
 
 export interface RegisterPayload {
-  login: string; password: string;
+  email: string; password: string;
   firstName: string; lastName: string;
   role: UserRole;
 }
@@ -244,9 +246,13 @@ export const authApi = {
 // ─── SESJE API ────────────────────────────────────────────────────────────────
 
 export const sessionsApi = {
-  list:    ()                               => apiData<Session[]>('/sessions'),
-  getById: (id: string)                    => apiData<Session>(`/sessions/${id}`),
-  create:  (payload: CreateSessionPayload) => apiData<Session>('/sessions', { method: 'POST', body: JSON.stringify(payload) }),
+  list:         ()                               => apiData<Session[]>('/sessions'),
+  getById:      (id: string)                     => apiData<Session>(`/sessions/${id}`),
+  create:       (payload: CreateSessionPayload)  => apiData<Session>('/sessions', { method: 'POST', body: JSON.stringify(payload) }),
+  updateStatus: (id: string, status: string)     => apiData<Session>(`/sessions/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  addAgenda:    (id: string, payload: { title: string; order: number }) => apiData<AgendaItem>(`/sessions/${id}/agenda`, { method: 'POST', body: JSON.stringify(payload) }),
+  getStatistics:(id: string)                     => apiData<unknown>(`/sessions/${id}/statistics`),
+  createSummary:(id: string, content: string)    => apiData<unknown>(`/sessions/${id}/summary`, { method: 'POST', body: JSON.stringify({ content }) }),
 };
 
 // ─── GŁOSOWANIA API ───────────────────────────────────────────────────────────
