@@ -1,0 +1,210 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum SessionStatus {
+  SCHEDULED
+  ACTIVE
+  CONCLUDED
+
+  @@map("session_status_enum")
+}
+
+enum VotingStatus {
+  PENDING
+  OPEN
+  CLOSED
+
+  @@map("voting_status_enum")
+}
+
+enum VoteChoice {
+  FOR
+  AGAINST
+  ABSTAIN
+
+  @@map("vote_choice_enum")
+}
+
+enum AgendaItemStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+
+  @@map("item_status_enum")
+}
+
+model Role {
+  id              Int              @id @default(autoincrement())
+  name            String           @unique
+  users           User[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id              Int              @id @default(autoincrement())
+  code            String           @unique
+  description     String?
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       Int
+  permissionId Int
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model User {
+  id              Int               @id @default(autoincrement())
+  roleId          Int               @map("role_id")
+  firstName       String            @map("first_name")
+  lastName        String            @map("last_name")
+  email           String            @unique
+  passwordHash    String            @map("password_hash")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  lastLoginAt     DateTime?         @map("last_login_at")
+  isActive        Boolean           @default(true) @map("is_active")
+  committeeMember CommitteeMember[]
+  votes           Vote[]
+  systemLogs      SystemLog[]
+  uploadedDocs    Document[]        @relation("UploadedDocuments")
+  chairedSessions Session[]         @relation("ChairUser")
+  role            Role              @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@map("users")
+}
+
+model Committee {
+  id        Int               @id @default(autoincrement())
+  name      String
+  createdAt DateTime          @default(now()) @map("created_at")
+  members   CommitteeMember[]
+  sessions  Session[]
+
+  @@map("committees")
+}
+
+model CommitteeMember {
+  committeeId    Int
+  userId         Int
+  isChairperson  Boolean          @default(false) @map("is_chairperson")
+  committee      Committee        @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([committeeId, userId])
+  @@map("committee_members")
+}
+
+model Session {
+  id                   Int              @id @default(autoincrement())
+  title                String
+  committeeId          Int?             @map("committee_id")
+  chairUserId          Int?             @map("chair_user_id")
+  scheduledDate        DateTime         @map("scheduled_date")
+  status               SessionStatus    @default(SCHEDULED)
+  quorumRequired       Int              @map("quorum_required")
+  currentAgendaItemId  Int?             @map("current_agenda_item_id")
+  committee            Committee?       @relation(fields: [committeeId], references: [id])
+  chairUser            User?            @relation("ChairUser", fields: [chairUserId], references: [id])
+  agendaItems          AgendaItem[]
+  summary              SessionSummary?
+  currentAgendaItem    AgendaItem?      @relation("SessionCurrentAgendaItem", fields: [currentAgendaItemId], references: [id], onDelete: SetNull)
+
+  @@map("sessions")
+}
+
+model AgendaItem {
+  id               Int               @id @default(autoincrement())
+  sessionId        Int               @map("session_id")
+  position         Int
+  title            String
+  status           AgendaItemStatus  @default(PENDING)
+  session          Session           @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  documents        Document[]
+  votings          Voting[]
+  currentInSession Session?          @relation("SessionCurrentAgendaItem")
+
+  @@unique([sessionId, position])
+  @@map("agenda_items")
+}
+
+model Document {
+  id           Int      @id @default(autoincrement())
+  agendaItemId Int      @map("agenda_item_id")
+  fileName     String   @map("file_name")
+  fileUrl      String   @map("file_url")
+  uploadedAt   DateTime @default(now()) @map("uploaded_at")
+  uploadedBy   Int?     @map("uploaded_by")
+  fileSize     Int?     @map("file_size")
+  mimeType     String?  @map("mime_type")
+  deletedAt    DateTime? @map("deleted_at")
+  agendaItem   AgendaItem @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
+  uploader     User?     @relation("UploadedDocuments", fields: [uploadedBy], references: [id])
+
+  @@map("documents")
+}
+
+model Voting {
+  id                  Int         @id @default(autoincrement())
+  agendaItemId        Int         @map("agenda_item_id")
+  title               String
+  status              VotingStatus @default(PENDING)
+  startedAt           DateTime?   @map("started_at")
+  endedAt             DateTime?   @map("ended_at")
+  totalEligibleVoters Int?        @map("total_eligible_voters")
+  totalVotesCast      Int?        @map("total_votes_cast")
+  isValid             Boolean?
+  agendaItem          AgendaItem  @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
+  votes               Vote[]
+
+  @@map("votings")
+}
+
+model Vote {
+  id       BigInt    @id @default(autoincrement())
+  choice   VoteChoice
+  votedAt  DateTime  @default(now()) @map("voted_at")
+  votingId Int       @map("voting_id")
+  userId   Int       @map("user_id")
+  voting   Voting    @relation(fields: [votingId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([votingId, userId])
+  @@map("votes")
+}
+
+model SessionSummary {
+  sessionId     Int      @id @map("session_id")
+  attendanceCount Int    @map("attendance_count")
+  notes         String?
+  pdfExportUrl  String?  @map("pdf_export_url")
+  session       Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("session_summaries")
+}
+
+model SystemLog {
+  id        BigInt  @id @default(autoincrement())
+  action    String
+  payload   Json?
+  userId    Int?     @map("user_id")
+  ipAddress String?  @map("ip_address")
+  timestamp DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("system_logs")
+}

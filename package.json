@@ -1,20 +1,26 @@
 {
+  "name": "gminahub",
+  "version": "1.0.0",
+  "type": "module",
   "workspaces": [
     "frontend",
     "backend"
   ],
   "scripts": {
     "init": "node ./scripts/init.js",
-    "server": "node backend/server",
+    "server": "npm run dev --prefix backend",
     "client": "npm run dev --prefix frontend",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "merge": "node ./scripts/merge.js"
+    "database": "node ./scripts/database.cjs",
+    "dev": "concurrently \"npm run database\" \"npm run server\" \"npm run client\"",
+    "merge": "node ./scripts/merge.cjs"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "@types/socket.io": "^3.0.1",
+    "concurrently": "^10.0.3"
   },
   "dependencies": {
     "react-masonry-css": "^1.0.16",
+    "socket.io": "^4.8.3",
     "vite-plugin-svgr": "^5.2.0"
   }
 }
