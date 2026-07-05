@@ -80,8 +80,17 @@ export interface Session {
   id: string;
   title: string;
   status: SessionStatus;
-  scheduledAt: string;
-  committeeId: string | null;
+  // Backend może zwracać różne nazwy pola daty
+  scheduledAt?: string;
+  scheduledDate?: string;
+  scheduled_date?: string;
+  date?: string;
+  // Dodatkowe pola z ERD
+  committeeId?: string | null;
+  committee_id?: string | null;
+  chairUserId?: string | null;
+  quorumRequired?: number;
+  currentAgendaItemId?: string | null;
   committee: Committee | null;
   agendaItems?: AgendaItem[];
   summary?: SessionSummary | null;
@@ -98,17 +107,28 @@ export interface CreateSessionPayload {
 export interface AgendaItem {
   id: string;
   title: string;
-  order: number;
-  sessionId: string;
+  order?: number;       // Prisma/camelCase
+  position?: number;    // SQL/snake_case z ERD
+  sessionId?: string;
+  session_id?: string;
   documents: SessionDocument[];
   voting: Voting[];
+  status?: string;
 }
 
 export interface SessionDocument {
   id: string;
-  title: string;
-  fileUrl: string;
-  agendaItemId: string;
+  title?: string;       // alias
+  fileName?: string;    // Prisma camelCase
+  file_name?: string;   // SQL snake_case z ERD
+  fileUrl?: string;
+  file_url?: string;    // SQL snake_case z ERD
+  agendaItemId?: string;
+  agenda_item_id?: string;
+  uploadedAt?: string;
+  fileSize?: number;
+  mimeType?: string;
+  deletedAt?: string | null;
 }
 
 // ─── MODELE — Komisja ─────────────────────────────────────────────────────────
@@ -133,27 +153,42 @@ export interface Voting {
   id: string;
   title: string;
   status: VotingStatus;
-  agendaItemId: string;
+  agendaItemId?: string;
+  agenda_item_id?: string;
+  startedAt?: string;
+  endedAt?: string;
+  totalEligibleVoters?: number;
+  totalVotesCast?: number;
+  isValid?: boolean | null;
   votes?: Vote[];
 }
 
 export interface Vote {
   id: string;
-  value: VoteValue;
-  votingId: string;
-  userId: string;
+  value?: VoteValue;    // Prisma camelCase
+  choice?: VoteValue;   // SQL snake_case z ERD
+  votingId?: string;
+  voting_id?: string;
+  userId?: string;
+  user_id?: string;
   user?: UserListItem;
+  votedAt?: string;
 }
 
-export interface CastVotePayload { value: VoteValue; }
+export interface CastVotePayload { value?: VoteValue; choice?: VoteValue; }
 
 // ─── MODELE — Podsumowanie / Logi ─────────────────────────────────────────────
 
 export interface SessionSummary {
-  id: string;
-  content: string;
-  createdAt: string;
-  sessionId: string;
+  id?: string;
+  sessionId?: number | string;
+  session_id?: number | string;
+  attendanceCount?: number;
+  notes?: string;
+  content?: string;     // używane przez frontend
+  pdfExportUrl?: string;
+  pdf_export_url?: string;
+  createdAt?: string;
 }
 
 export interface SystemLog {

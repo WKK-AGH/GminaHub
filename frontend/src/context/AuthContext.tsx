@@ -11,7 +11,7 @@ export interface CurrentUser {
 interface AuthContextType {
   currentUser: CurrentUser | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (login: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   hasRole: (...roles: UserRole[]) => boolean;
 }
@@ -19,7 +19,7 @@ interface AuthContextType {
 function mapUser(user: UserResponse): CurrentUser {
   return {
     id: user.id,
-    email: user.login,
+    email: user.email ?? user.login,
     firstName: user.firstName,
     lastName: user.lastName,
     fullName: getFullName(user),
@@ -30,19 +30,37 @@ function mapUser(user: UserResponse): CurrentUser {
 
 // Fallback accounts used when backend is unavailable (demo / development)
 const MOCK_USERS: Record<string, { password: string; user: UserResponse }> = {
-  'admin@nasza-gmina.pl': {
+  'admin': {
     password: 'Admin123!',
-    user: { id: '1', firstName: 'Administrator', lastName: '', role: 'ADMINISTRATOR', login: 'admin@nasza-gmina.pl' },
+    user: { id: '1', firstName: 'Administrator', lastName: '', role: 'ADMINISTRATOR', login: 'admin' },
   },
-  'radny@nasza-gmina.pl': {
+  'radny': {
     password: 'Radny123!',
-    user: { id: '2', firstName: 'Jan', lastName: 'Kowalski', role: 'RADNY', login: 'radny@nasza-gmina.pl' },
+    user: { id: '2', firstName: 'Jan', lastName: 'Kowalski', role: 'RADNY', login: 'radny' },
   },
-  'przewodniczacy@nasza-gmina.pl': {
+  'przewodniczacy': {
     password: 'Przew123!',
-    user: { id: '3', firstName: 'Anna', lastName: 'Wiśniewska', role: 'PRZEWODNICZACY', login: 'przewodniczacy@nasza-gmina.pl' },
+    user: { id: '3', firstName: 'Anna', lastName: 'Wiśniewska', role: 'PRZEWODNICZACY', login: 'przewodniczacy' },
   },
 };
+
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+function parseJwt(token: string): Record<string, any> | null {
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(base64));
+  } catch {
+    return null;
+  }
+}
+
+function getInitialsFromNames(firstName: string, lastName: string): string {
+  const f = firstName.trim()[0] ?? '';
+  const l = lastName.trim()[0]  ?? '';
+  return (f + l).toUpperCase() || '??';
+}
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -54,18 +72,49 @@ export function useAuth() {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [isLoading,   setIsLoading]   = useState(false);
+  const [isLoading,   setIsLoading]   = useState(true); // true — czeka na refresh
 
+  // Przy starcie aplikacji próbuj odtworzyć sesję przez Refresh Token (HttpOnly Cookie)
   useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        const res = await authApi.refresh();
+        if (res.success && res.accessToken) {
+          setAccessToken(res.accessToken);
+          // Pobierz dane użytkownika po odświeżeniu tokenu
+          // Backend powinien zwrócić user w refresh response
+          // Jeśli nie — spróbuj pobrać przez /api/users/me (jeśli istnieje)
+          const decoded = parseJwt(res.accessToken);
+          if (decoded) {
+            setCurrentUser({
+              id:        decoded.userId ?? decoded.id ?? '',
+              email:     decoded.email,
+              firstName: decoded.firstName ?? '',
+              lastName:  decoded.lastName  ?? '',
+              fullName:  `${decoded.firstName ?? ''} ${decoded.lastName ?? ''}`.trim(),
+              initials:  getInitialsFromNames(decoded.firstName ?? '', decoded.lastName ?? ''),
+              role:      decoded.role as UserRole,
+            });
+          }
+        }
+      } catch {
+        // Brak ważnego refresh tokenu — użytkownik musi się zalogować
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    restoreSession();
+
     const handler = () => { setCurrentUser(null); setAccessToken(null); };
     window.addEventListener('auth:logout', handler);
     return () => window.removeEventListener('auth:logout', handler);
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (loginStr: string, password: string) => {
     // Try real backend first
     try {
-      const res = await authApi.login({ email, password });
+      const res = await authApi.login({ email: loginStr, password });
       if (res.success) {
         setAccessToken(res.accessToken);
         setCurrentUser(mapUser(res.user));
@@ -76,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // Mock fallback
-    const mock = MOCK_USERS[email];
+    const mock = MOCK_USERS[loginStr];
     if (mock && mock.password === password) {
       setCurrentUser(mapUser(mock.user));
       return;
