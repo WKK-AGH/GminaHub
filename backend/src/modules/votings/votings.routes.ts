@@ -1,11 +1,24 @@
 import { Router } from 'express';
 import { startVoting, endVoting } from './votings.controller';
 import { authenticateJWT, authorizeRoles } from '@/middleware/auth.middleware';
+import { validateIdParam } from '@/middleware/validate';
 
 const router = Router();
 
-// Tylko administrator lub przewodniczący mogą zarządzać stanem głosowania
-router.patch('/:id/start', authenticateJWT, authorizeRoles('ADMINISTRATOR', 'PRZEWODNICZACY'), startVoting);
-router.patch('/:id/end', authenticateJWT, authorizeRoles('ADMINISTRATOR', 'PRZEWODNICZACY'), endVoting);
+router.patch(
+  '/:id/start',
+  authenticateJWT,
+  authorizeRoles('ADMINISTRATOR', 'PRZEWODNICZACY'),
+  validateIdParam,
+  startVoting
+);
+
+router.patch(
+  '/:id/end',
+  authenticateJWT,
+  authorizeRoles('ADMINISTRATOR', 'PRZEWODNICZACY'),
+  validateIdParam,
+  endVoting
+);
 
 export default router;

@@ -10,7 +10,15 @@ export const getAllCommittees = async (_req: Request, res: Response, next: NextF
         members: {
           include: {
             user: {
-              select: { id: true, firstName: true, lastName: true, role: true }
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                role: {
+                  select: { name: true }
+                }
+              }
             }
           }
         }
@@ -29,7 +37,7 @@ export const createCommittee = async (req: Request, res: Response, next: NextFun
   try {
     const { name } = req.body;
 
-    const existing = await prisma.committee.findUnique({ where: { name } });
+    const existing = await prisma.committee.findFirst({ where: { name } });
     if (existing) {
       return res.status(400).json({ success: false, message: 'Komisja o tej nazwie już istnieje.' });
     }
@@ -49,28 +57,41 @@ export const createCommittee = async (req: Request, res: Response, next: NextFun
 // POST /api/committees/:id/members - Dodawanie członka do komisji
 export const addCommitteeMember = async (req: Request, res: Response, next: NextFunction): Promise<void | Response> => {
   try {
-    const committeeId = req.params.id as string;
+    const paramId = req.params.id ? req.params.id.toString() : '';
+    const committeeId = parseInt(paramId, 10);
     const { userId } = req.body;
 
+    if (isNaN(committeeId)) {
+      return res.status(400).json({ success: false, message: 'Identyfikator komisji musi być liczbą.' });
+    }
+
+    const parsedUserId = parseInt(userId?.toString() || '', 10);
+    if (isNaN(parsedUserId)) {
+      return res.status(400).json({ success: false, message: 'Identyfikator użytkownika musi być liczbą.' });
+    }
+
     // Sprawdzenie czy użytkownik istnieje
-    const userExist = await prisma.user.findUnique({ where: { id: userId } });
+    const userExist = await prisma.user.findUnique({ where: { id: parsedUserId } });
     if (!userExist) {
       return res.status(404).json({ success: false, message: 'Nie znaleziono użytkownika.' });
     }
 
     // Dodanie relacji członkostwa
     const membership = await prisma.committeeMember.create({
-      data: { committeeId, userId }
+      data: {
+        committeeId,
+        userId: parsedUserId
+      }
     });
 
-    logger.info(`Dodano użytkownika ${userId} do komisji ${committeeId}`);
+    logger.info(`Dodano użytkownika ${parsedUserId} do komisji ${committeeId}`);
     return res.status(201).json({ success: true, data: membership });
   } catch (error) {
-    // Łapiemy błąd naruszenia unikalności z Prisma (P2002)
+
     if ((error as any).code === 'P2002') {
       return res.status(400).json({ success: false, message: 'Ten radny jest już członkiem tej komisji.' });
     }
-    logger.error('Błąd podczas dodawania członka do komisji', error);
+    logger.error('Błąd podczas dodgingu członka do komisji', error);
     return next(error);
   }
 };

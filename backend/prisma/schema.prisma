@@ -1,6 +1,5 @@
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -117,7 +116,7 @@ model Session {
   scheduledDate        DateTime         @map("scheduled_date")
   status               SessionStatus    @default(SCHEDULED)
   quorumRequired       Int              @map("quorum_required")
-  currentAgendaItemId  Int?             @map("current_agenda_item_id")
+  currentAgendaItemId  Int?             @unique @map("current_agenda_item_id")
   committee            Committee?       @relation(fields: [committeeId], references: [id])
   chairUser            User?            @relation("ChairUser", fields: [chairUserId], references: [id])
   agendaItems          AgendaItem[]

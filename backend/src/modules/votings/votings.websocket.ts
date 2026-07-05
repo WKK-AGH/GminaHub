@@ -1,132 +1,160 @@
 import { prisma } from '@/db/client';
 import { TokenPayload, verifyAccessToken } from '@/utils/helpers/jwt.helper';
 import { Server, Socket } from 'socket.io';
+import { VotingStatus } from '@prisma/client';
 
-// Rozszerzamy typ Socket o zdekodowany payload tokena, aby móc łatwo z niego korzystać
 interface AuthenticatedSocket extends Socket {
-    user?: TokenPayload;
+  user?: TokenPayload;
 }
 
 export const initWebsockets = (io: Server) => {
-    // MIDDLEWARE: Sprawdzenie tokenu JWT przed dopuszczeniem do połączenia
-    io.use((socket: AuthenticatedSocket, next) => {
-        // Front przekazuje token w obiekcie auth: { token: '...' }
-        const token = socket.handshake.auth?.token;
+  // MIDDLEWARE: Sprawdzenie tokenu JWT przed dopuszczeniem do połączenia
+  io.use((socket: AuthenticatedSocket, next) => {
+    const token = socket.handshake.auth?.token;
 
-        if (!token) {
-            return next(new Error('Brak tokenu autoryzacyjnego. Połączenie odrzucone.'));
-        }
+    if (!token) {
+      return next(new Error('Brak tokenu autoryzacyjnego. Połączenie odrzucone.'));
+    }
 
-        const decoded = verifyAccessToken(token);
-        if (!decoded) {
-            return next(new Error('Nieprawidłowy lub przedawniony token.'));
-        }
+    const decoded = verifyAccessToken(token);
+    if (!decoded) {
+      return next(new Error('Nieprawidłowy lub przedawniony token.'));
+    }
 
-        // Zapisujemy dane zalogowanego użytkownika w obiekcie socket
-        socket.user = decoded;
-        next();
+    socket.user = decoded;
+    next();
+  });
+
+  io.on('connection', (socket: AuthenticatedSocket) => {
+    console.log(
+      `Bezpieczne połączenie WS nawiązane: ${socket.id} (Użytkownik: ${socket.user?.userId})`,
+    );
+
+    // 1. Dołączenie do pokoju konkretnej sesji
+    socket.on('join_session', async ({ sessionId }) => {
+      const userId = socket.user?.userId;
+      const numericSessionId = parseInt(sessionId?.toString() || '', 10);
+
+      if (isNaN(numericSessionId)) return;
+
+      socket.join(`session_${numericSessionId}`);
+      console.log(`Użytkownik ${userId} dołączył do pokoju sesji: session_${numericSessionId}`);
+
+      const activeVoting = await prisma.voting.findFirst({
+        where: {
+          agendaItem: { sessionId: numericSessionId },
+          status: VotingStatus.OPEN,
+        },
+        include: { votes: true },
+      });
+
+      if (activeVoting) {
+        socket.emit('voting_state_changed', activeVoting);
+      }
     });
 
-    io.on('connection', (socket: AuthenticatedSocket) => {
-        console.log(
-            `Bezpieczne połączenie WS nawiązane: ${socket.id} (Użytkownik: ${socket.user?.userId})`,
-        );
+    // 2. Akcja Przewodniczącego: Rozpoczęcie głosowania
+    socket.on('start_voting', async ({ votingId, sessionId }) => {
+      if (socket.user?.role !== 'PRZEWODNICZACY' && socket.user?.role !== 'ADMINISTRATOR') {
+        socket.emit('error', { message: 'Brak uprawnień do otwarcia głosowania.' });
+        return;
+      }
 
-        // 1. Dołączenie do pokoju konkretnej sesji (używamy już bezpiecznego userId z tokenu)
-        socket.on('join_session', async ({ sessionId }) => {
-            const userId = socket.user?.userId;
+      const numericVotingId = parseInt(votingId?.toString() || '', 10);
+      const numericSessionId = parseInt(sessionId?.toString() || '', 10);
 
-            socket.join(`session_${sessionId}`);
-            console.log(`Użytkownik ${userId} dołączył do pokoju sesji: session_${sessionId}`);
+      if (isNaN(numericVotingId) || isNaN(numericSessionId)) {
+        socket.emit('error', { message: 'Niepoprawne parametry identyfikatorów.' });
+        return;
+      }
 
-            const activeVoting = await prisma.voting.findFirst({
-                where: {
-                    agendaItem: { sessionId: sessionId },
-                    status: 'ACTIVE',
-                },
-                include: { votes: true },
-            });
-
-            if (activeVoting) {
-                socket.emit('voting_state_changed', activeVoting);
-            }
+      try {
+        const updatedVoting = await prisma.voting.update({
+          where: { id: numericVotingId },
+          data: { status: VotingStatus.OPEN },
+          include: { votes: true },
         });
 
-        // 2. Akcja Przewodniczącego: Rozpoczęcie głosowania (dodatkowo weryfikujemy rolę z tokenu!)
-        socket.on('start_voting', async ({ votingId, sessionId }) => {
-            if (socket.user?.role !== 'PRZEWODNICZACY' && socket.user?.role !== 'ADMINISTRATOR') {
-                socket.emit('error', { message: 'Brak uprawnień do otwarcia głosowania.' });
-                return;
-            }
-
-            try {
-                const updatedVoting = await prisma.voting.update({
-                    where: { id: votingId },
-                    data: { status: 'ACTIVE' },
-                    include: { votes: true },
-                });
-
-                io.to(`session_${sessionId}`).emit('voting_started', updatedVoting);
-            } catch (err) {
-                socket.emit('error', { message: 'Nie udało się uruchomić głosowania.' });
-            }
-        });
-
-        // 3. Akcja Radnego: Oddanie głosu na żywo (userId pobieramy bezpośrednio z bezpiecznego tokenu)
-        socket.on('cast_vote', async ({ votingId, value, sessionId }) => {
-            const userId = socket.user?.userId;
-            if (!userId) return;
-
-            try {
-                await prisma.vote.upsert({
-                    where: {
-                        votingId_userId: { votingId, userId },
-                    },
-                    update: { value },
-                    create: { votingId, userId, value },
-                });
-
-                const allVotes = await prisma.vote.findMany({
-                    where: { votingId },
-                });
-
-                const results = {
-                    yes: allVotes.filter((v) => v.value === 'YES').length,
-                    no: allVotes.filter((v) => v.value === 'NO').length,
-                    abstain: allVotes.filter((v) => v.value === 'ABSTAIN').length,
-                    total: allVotes.length,
-                };
-
-                io.to(`session_${sessionId}`).emit('vote_updated', { votingId, results });
-            } catch (err) {
-                socket.emit('error', { message: 'Błąd podczas zapisu głosu.' });
-                return;
-            }
-        });
-
-        // 4. Akcja Przewodniczącego: Zakończenie głosowania (z weryfikacją roli)
-        socket.on('end_voting', async ({ votingId, sessionId }) => {
-            if (socket.user?.role !== 'PRZEWODNICZACY' && socket.user?.role !== 'ADMINISTRATOR') {
-                socket.emit('error', { message: 'Brak uprawnień do zamknięcia głosowania.' });
-                return;
-            }
-
-            try {
-                const finalizedVoting = await prisma.voting.update({
-                    where: { id: votingId },
-                    data: { status: 'COMPLETED' },
-                    include: { votes: true },
-                });
-
-                io.to(`session_${sessionId}`).emit('voting_completed', finalizedVoting);
-            } catch (err) {
-                socket.emit('error', { message: 'Nie udało się zakończyć głosowania.' });
-                return;
-            }
-        });
-
-        socket.on('disconnect', () => {
-            console.log(`Rozłączono bezpieczny socket: ${socket.id}`);
-        });
+        io.to(`session_${numericSessionId}`).emit('voting_started', updatedVoting);
+      } catch (err) {
+        socket.emit('error', { message: 'Nie udało się uruchomić głosowania.' });
+      }
     });
+
+    // 3. Akcja Radnego: Oddanie głosu na żywo
+    socket.on('cast_vote', async ({ votingId, choice, sessionId }) => {
+      const userIdStr = socket.user?.userId;
+      if (!userIdStr) return;
+
+      const numericUserId = parseInt(userIdStr, 10);
+      const numericVotingId = parseInt(votingId?.toString() || '', 10);
+      const numericSessionId = parseInt(sessionId?.toString() || '', 10);
+
+      if (isNaN(numericUserId) || isNaN(numericVotingId) || isNaN(numericSessionId)) {
+        socket.emit('error', { message: 'Niepoprawne identyfikatory.' });
+        return;
+      }
+
+      let mappedChoice: 'FOR' | 'AGAINST' | 'ABSTAIN' = 'ABSTAIN';
+      if (choice === 'YES' || choice === 'FOR') mappedChoice = 'FOR';
+      if (choice === 'NO' || choice === 'AGAINST') mappedChoice = 'AGAINST';
+
+      try {
+        await prisma.vote.upsert({
+          where: {
+            votingId_userId: { votingId: numericVotingId, userId: numericUserId },
+          },
+          update: { choice: mappedChoice },
+          create: { votingId: numericVotingId, userId: numericUserId, choice: mappedChoice },
+        });
+
+        const allVotes = await prisma.vote.findMany({
+          where: { votingId: numericVotingId },
+        });
+
+        const results = {
+          for: allVotes.filter((v) => v.choice === 'FOR').length,
+          against: allVotes.filter((v) => v.choice === 'AGAINST').length,
+          abstain: allVotes.filter((v) => v.choice === 'ABSTAIN').length,
+          total: allVotes.length,
+        };
+
+        io.to(`session_${numericSessionId}`).emit('vote_updated', { votingId: numericVotingId, results });
+      } catch (err) {
+        socket.emit('error', { message: 'Błąd podczas zapisu głosu.' });
+      }
+    });
+
+    // 4. Akcja Przewodniczącego: Zakończenie głosowania
+    socket.on('end_voting', async ({ votingId, sessionId }) => {
+      if (socket.user?.role !== 'PRZEWODNICZACY' && socket.user?.role !== 'ADMINISTRATOR') {
+        socket.emit('error', { message: 'Brak uprawnień do zamknięcia głosowania.' });
+        return;
+      }
+
+      const numericVotingId = parseInt(votingId?.toString() || '', 10);
+      const numericSessionId = parseInt(sessionId?.toString() || '', 10);
+
+      if (isNaN(numericVotingId) || isNaN(numericSessionId)) {
+        socket.emit('error', { message: 'Niepoprawne identyfikatory.' });
+        return;
+      }
+
+      try {
+        const finalizedVoting = await prisma.voting.update({
+          where: { id: numericVotingId },
+          data: { status: VotingStatus.CLOSED },
+          include: { votes: true },
+        });
+
+        io.to(`session_${numericSessionId}`).emit('voting_completed', finalizedVoting);
+      } catch (err) {
+        socket.emit('error', { message: 'Nie udało się zakończyć głosowania.' });
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log(`Rozłączono bezpieczny socket: ${socket.id}`);
+    });
+  });
 };
