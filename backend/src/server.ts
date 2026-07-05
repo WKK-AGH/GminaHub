@@ -1,3 +1,5 @@
+import './env';
+
 import { errorHandler } from '@/middleware/errorHandler';
 import authRoutes from '@/modules/auth/auth.routes';
 import committeesRoutes from '@/modules/committees/committees.routes';
@@ -7,15 +9,12 @@ import votingsRoutes from '@/modules/votings/votings.routes';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { initWebsockets } from './modules/votings/votings.websocket';
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;

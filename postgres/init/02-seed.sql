@@ -21,10 +21,10 @@ INSERT INTO role_permissions (role_id, permission_id) VALUES
 -- 4. UŻYTKOWNICY
 -- UWAGA: Hasło dla wszystkich to: password123 (zahashowane w standardzie bcrypt)
 INSERT INTO users (id, role_id, first_name, last_name, email, password_hash) VALUES
-(1, 1, 'Jan', 'Kowalski', 'admin@esesja.pl', '$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW'),
-(2, 2, 'Anna', 'Nowak', 'przewodniczaca@esesja.pl', '$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW'),
-(3, 3, 'Piotr', 'Wiśniewski', 'radny1@esesja.pl', '$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW'),
-(4, 3, 'Maria', 'Wójcik', 'radna2@esesja.pl', '$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW');
+(1, 1, 'Jan', 'Kowalski', 'admin@esesja.pl', '$2b$10$skKLIfZzoF5Z0BBVQ9ej.OkTMIrc38UZtANFRDpSBun88drDQb9Wu'),
+(2, 2, 'Anna', 'Nowak', 'przewodniczaca@esesja.pl', '$2b$10$O18kUi3GFWemHCMdberDW.2M6UaTOab870ImwwjNYrWU1o.rZS2lu'),
+(3, 3, 'Piotr', 'Wiśniewski', 'radny1@esesja.pl', '$2b$10$x4gK9OfdhpT7NwVUYYWkpeSzgr3W8WnVcAJDFWUkF/6WuFzv69bfC'),
+(4, 3, 'Maria', 'Wójcik', 'radna2@esesja.pl', '$2b$10$PoywsgSWExbA8aoBtycLQOXYeHFrtd9sPDRcyeU5kzZOe0V/wWeLS');
 
 -- 5. KOMISJE
 INSERT INTO committees (id, name) VALUES
