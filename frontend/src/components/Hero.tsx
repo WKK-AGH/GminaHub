@@ -184,7 +184,7 @@ export default function Hero() {
             </div>
 
             {/* ── KALENDARZ — jasny, oddzielna sekcja ── */}
-            <div id="calendar" className="bg-white border-b border-slate-200 py-14">
+            <div id="kalendarz" className="bg-white border-b border-slate-200 py-14">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="max-w-sm mx-auto">
                         <div className="flex items-center gap-2 mb-6">
