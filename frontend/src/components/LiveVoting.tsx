@@ -27,8 +27,8 @@ function VoteButton({ value, selected, disabled, onClick }: {
   onClick: () => void;
 }) {
   const config: Record<VoteValue, { cls: string; selectedCls: string; icon: React.ReactNode }> = {
-    YES:     { cls: 'border-emerald-200 hover:bg-emerald-50 hover:border-emerald-400', selectedCls: 'bg-emerald-600 border-emerald-600 text-white', icon: <CheckCircle2 className="w-6 h-6" /> },
-    NO:      { cls: 'border-red-200     hover:bg-red-50     hover:border-red-400',     selectedCls: 'bg-red-600     border-red-600     text-white', icon: <XCircle      className="w-6 h-6" /> },
+    FOR:     { cls: 'border-emerald-200 hover:bg-emerald-50 hover:border-emerald-400', selectedCls: 'bg-emerald-600 border-emerald-600 text-white', icon: <CheckCircle2 className="w-6 h-6" /> },
+    AGAINST: { cls: 'border-red-200     hover:bg-red-50     hover:border-red-400',     selectedCls: 'bg-red-600     border-red-600     text-white', icon: <XCircle      className="w-6 h-6" /> },
     ABSTAIN: { cls: 'border-slate-200   hover:bg-slate-50   hover:border-slate-400',   selectedCls: 'bg-slate-600   border-slate-600   text-white', icon: <MinusCircle  className="w-6 h-6" /> },
   };
   const cfg = config[value];
@@ -92,7 +92,6 @@ export default function LiveVoting() {
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Pobierz sesję z API
   useEffect(() => {
     if (!sessionId) return;
     sessionsApi.getById(sessionId)
@@ -101,7 +100,6 @@ export default function LiveVoting() {
       .finally(()  => setLoading(false));
   }, [sessionId]);
 
-  // Licznik czasu
   useEffect(() => {
     timerRef.current = setInterval(() => setElapsed(t => t + 1), 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
@@ -117,7 +115,7 @@ export default function LiveVoting() {
     if (!selectedVote || voted || sending) return;
     const activeVoting = session?.agendaItems
       ?.flatMap(p => p.voting ?? [])
-      .find(v => v.status === 'ACTIVE');
+      .find(v => v.status === 'OPEN'); // Update status
 
     if (!activeVoting) return;
 
@@ -126,8 +124,8 @@ export default function LiveVoting() {
       await votingsApi.vote(activeVoting.id, { value: selectedVote });
       setVoted(true);
       setResults({
-        forVotes:   selectedVote === 'YES'     ? 9 : 8,
-        against:  selectedVote === 'NO'      ? 4 : 3,
+        forVotes: selectedVote === 'FOR' ? 9 : 8,
+        against:  selectedVote === 'AGAINST' ? 4 : 3,
         abstain:  selectedVote === 'ABSTAIN' ? 5 : 4,
         total:    15,
       });
@@ -167,12 +165,11 @@ export default function LiveVoting() {
   if (!session) return null;
 
   const agendaItems = session.agendaItems ?? [];
-  const activeItem   = agendaItems.find(p => p.voting?.some(v => v.status === 'ACTIVE'));
-  const activeVoting = activeItem?.voting?.find(v => v.status === 'ACTIVE');
+  const activeItem   = agendaItems.find(p => p.voting?.some(v => v.status === 'OPEN'));
+  const activeVoting = activeItem?.voting?.find(v => v.status === 'OPEN');
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-
       {/* Górny pasek */}
       <div className="bg-slate-900 border-b border-slate-800 px-4 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
@@ -245,7 +242,7 @@ export default function LiveVoting() {
             {!voted ? (
               <>
                 <div className="flex gap-3">
-                  {(['YES', 'NO', 'ABSTAIN'] as VoteValue[]).map(v => (
+                  {(['FOR', 'AGAINST', 'ABSTAIN'] as VoteValue[]).map(v => (
                     <VoteButton key={v} value={v}
                       selected={selectedVote === v}
                       disabled={sending}
@@ -284,7 +281,6 @@ export default function LiveVoting() {
             )}
           </div>
         ) : (
-          /* Brak aktywnego głosowania */
           <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 text-center">
             <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-4">
               <Radio className="w-8 h-8 text-slate-600" />
@@ -302,8 +298,8 @@ export default function LiveVoting() {
             </h3>
             <div className="space-y-2">
               {agendaItems.sort((a, b) => a.order - b.order).map((item, i) => {
-                const isActive = item.voting?.some(v => v.status === 'ACTIVE');
-                const isCompleted = item.voting?.every(v => v.status === 'COMPLETED');
+                const isActive = item.voting?.some(v => v.status === 'OPEN');
+                const isCompleted = item.voting?.every(v => v.status === 'CLOSED');
                 return (
                   <div key={item.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition ${isActive ? 'bg-[#B91C1C]/10 border border-[#B91C1C]/30' : 'border border-transparent'}`}>
                     <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-extrabold flex-shrink-0 ${
@@ -323,7 +319,6 @@ export default function LiveVoting() {
           </div>
         )}
 
-        {/* Informacja o WebSocket */}
         <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-xs text-amber-400">
           <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
           <p>Głosowania w czasie rzeczywistym wymagają połączenia WebSocket. Pełna funkcjonalność będzie dostępna po wdrożeniu przez backend.</p>

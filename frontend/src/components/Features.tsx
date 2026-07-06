@@ -6,9 +6,9 @@ import { formatDate, formatTime, getSessionDate } from '../utils/dateUtils';
 import SessionCalendar from './Sessioncalendar';
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  PLANNED:  { label: 'Zaplanowana', className: 'text-amber-700 bg-amber-50 border-amber-200' },
-  ACTIVE:   { label: 'W trakcie',   className: 'text-[#B91C1C] bg-red-50 border-red-200'    },
-  FINISHED: { label: 'Zakończona',  className: 'text-slate-500 bg-slate-100 border-slate-200'},
+  SCHEDULED: { label: 'Zaplanowana', className: 'text-amber-700 bg-amber-50 border-amber-200' },
+  ACTIVE:    { label: 'W trakcie',   className: 'text-[#B91C1C] bg-red-50 border-red-200'    },
+  CONCLUDED: { label: 'Zakończona',  className: 'text-slate-500 bg-slate-100 border-slate-200'},
 };
 
 export default function Features() {
@@ -22,14 +22,14 @@ export default function Features() {
       .finally(() => setLoading(false));
   }, []);
 
-  const finishedSessions  = sessions.filter(s => s.status === 'FINISHED');
+  const finishedSessions  = sessions.filter(s => s.status === 'CONCLUDED');
   const activeSessions    = sessions.filter(s => s.status === 'ACTIVE');
-  const plannedSessions   = sessions.filter(s => s.status === 'PLANNED');
+  const plannedSessions   = sessions.filter(s => s.status === 'SCHEDULED');
 
   // Statystyki z zakończonych sesji
   const totalVotings  = finishedSessions.flatMap(s => s.agendaItems ?? []).flatMap(a => a.voting ?? []).length;
   const passedVotings = finishedSessions.flatMap(s => s.agendaItems ?? []).flatMap(a => a.voting ?? []).filter(v => {
-    const yes   = v.votes?.filter(vote => vote.value === 'YES').length  ?? 0;
+    const yes   = v.votes?.filter((vote: any) => vote.value === 'FOR').length  ?? 0;
     const total = v.votes?.length ?? 0;
     return total > 0 && yes > total / 2;
   }).length;
@@ -85,7 +85,7 @@ export default function Features() {
             {finishedSessions.slice(0, 5).map(session => {
               const votings   = (session.agendaItems ?? []).flatMap(a => a.voting ?? []);
               const passed    = votings.filter(v => {
-                const yes   = v.votes?.filter(vote => vote.value === 'YES').length ?? 0;
+                const yes   = v.votes?.filter((vote: any) => vote.value === 'FOR').length ?? 0;
                 const total = v.votes?.length ?? 0;
                 return total > 0 && yes > total / 2;
               }).length;

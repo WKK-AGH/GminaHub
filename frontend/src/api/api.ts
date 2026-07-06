@@ -1,4 +1,3 @@
-
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api';
 export const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:5000';
 
@@ -6,33 +5,33 @@ export const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:5000';
 
 export interface ApiError { message: string; status: number; }
 
-export type UserRole     = 'RADNY' | 'PRZEWODNICZACY' | 'ADMINISTRATOR';
-export type SessionStatus = 'PLANNED' | 'ACTIVE' | 'FINISHED';
-export type VotingStatus  = 'PENDING' | 'ACTIVE' | 'COMPLETED';
-export type VoteValue     = 'YES' | 'NO' | 'ABSTAIN';
+export type UserRole      = 'MEMBER' | 'CHAIRPERSON' | 'ADMIN';
+export type SessionStatus = 'SCHEDULED' | 'ACTIVE' | 'CONCLUDED';
+export type VotingStatus  = 'PENDING' | 'OPEN' | 'CLOSED';
+export type VoteValue     = 'FOR' | 'AGAINST' | 'ABSTAIN';
 
 export const ROLE_LABEL: Record<UserRole, string> = {
-  RADNY:          'Radny',
-  PRZEWODNICZACY: 'Przewodniczący',
-  ADMINISTRATOR:  'Administrator',
+  MEMBER:         'Radny',
+  CHAIRPERSON:    'Przewodniczący',
+  ADMIN:          'Administrator',
 };
 
 export const VOTE_LABEL: Record<VoteValue, string> = {
-  YES:     'ZA',
-  NO:      'PRZECIW',
+  FOR:     'ZA',
+  AGAINST: 'PRZECIW',
   ABSTAIN: 'WSTRZYMUJĘ',
 };
 
 export const SESSION_STATUS_LABEL: Record<string, string> = {
-  PLANNED:  'Nadchodząca',
-  ACTIVE:   'W trakcie',
-  FINISHED: 'Zakończona',
+  SCHEDULED: 'Nadchodząca',
+  ACTIVE:    'W trakcie',
+  CONCLUDED: 'Zakończona',
 };
 
 export const VOTING_STATUS_LABEL: Record<string, string> = {
-  PENDING:   'Oczekuje',
-  ACTIVE:    'Aktywne',
-  COMPLETED: 'Zakończone',
+  PENDING: 'Oczekuje',
+  OPEN:    'Aktywne',
+  CLOSED:  'Zakończone',
 };
 
 // ─── MODELE — Użytkownik ──────────────────────────────────────────────────────
@@ -309,7 +308,6 @@ export const usersApi = {
 // ─── DOKUMENTY API ────────────────────────────────────────────────────────────
 
 export const documentsApi = {
-  // Upload pliku do punktu agendy — wysyła FormData (multipart)
   upload: async (agendaItemId: string, file: File): Promise<SessionDocument> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -336,6 +334,5 @@ export const documentsApi = {
     return data.data as SessionDocument;
   },
 
-  // Usunięcie dokumentu
   delete: (documentId: string) => apiData<void>(`/documents/${documentId}`, { method: 'DELETE' }),
 };

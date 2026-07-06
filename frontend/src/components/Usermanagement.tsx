@@ -30,21 +30,21 @@ const EMPTY_FORM: NewUserForm = {
     password: '',
     firstName: '',
     lastName: '',
-    role: 'RADNY',
+    role: 'MEMBER',
 };
 
 // ─── KONFIG RÓL ──────────────────────────────────────────────────────────────
 
 const ROLE_CONFIG: Record<UserRole, { className: string; desc: string }> = {
-    ADMINISTRATOR: {
+    ADMIN: {
         className: 'bg-red-50 text-[#B91C1C] border-red-200',
         desc: 'Pełny dostęp do systemu',
     },
-    PRZEWODNICZACY: {
+    CHAIRPERSON: {
         className: 'bg-amber-50 text-amber-700 border-amber-200',
         desc: 'Zarządza sesjami i komisjami',
     },
-    RADNY: {
+    MEMBER: {
         className: 'bg-slate-100 text-slate-600 border-slate-300',
         desc: 'Uczestniczy w głosowaniach',
     },
@@ -190,7 +190,6 @@ export default function UserManagement() {
             </div>
 
             <div className="max-w-4xl mx-auto px-4 py-7 space-y-5">
-                {/* Komunikat sukcesu */}
                 {formSuccess && (
                     <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded p-4 text-sm text-emerald-800">
                         <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
@@ -198,10 +197,9 @@ export default function UserManagement() {
                     </div>
                 )}
 
-                {/* Statystyki */}
                 {!loading && (
                     <div className="grid grid-cols-3 gap-3">
-                        {(['RADNY', 'PRZEWODNICZACY', 'ADMINISTRATOR'] as UserRole[]).map(
+                        {(['MEMBER', 'CHAIRPERSON', 'ADMIN'] as UserRole[]).map(
                             (role) => (
                                 <div
                                     key={role}
@@ -219,7 +217,6 @@ export default function UserManagement() {
                     </div>
                 )}
 
-                {/* Formularz nowego użytkownika */}
                 {showForm && (
                     <div className="bg-white border border-slate-200 rounded overflow-hidden">
                         <div className="bg-[#B91C1C] px-5 py-3">
@@ -314,7 +311,7 @@ export default function UserManagement() {
                                 </label>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     {(
-                                        ['RADNY', 'PRZEWODNICZACY', 'ADMINISTRATOR'] as UserRole[]
+                                        ['MEMBER', 'CHAIRPERSON', 'ADMIN'] as UserRole[]
                                     ).map((role) => (
                                         <button
                                             key={role}
@@ -372,7 +369,6 @@ export default function UserManagement() {
                     </div>
                 )}
 
-                {/* Lista użytkowników */}
                 <div className="bg-white border border-slate-200 rounded overflow-hidden">
                     <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3 flex-wrap">
                         <h2 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
@@ -432,7 +428,7 @@ export default function UserManagement() {
                             {!loading &&
                                 filtered.map((user) => {
                                     const role = user.role.name as UserRole;
-                                    const cfg = ROLE_CONFIG[role] ?? ROLE_CONFIG.RADNY;
+                                    const cfg = ROLE_CONFIG[role] ?? ROLE_CONFIG.MEMBER;
                                     return (
                                         <tr key={user.id} className="hover:bg-slate-50 transition">
                                             <td className="px-4 py-3">
@@ -463,7 +459,6 @@ export default function UserManagement() {
                     </table>
                 </div>
 
-                {/* Info o bezpieczeństwie */}
                 <div className="flex items-start gap-3 bg-slate-100 border border-slate-200 rounded p-4 text-xs text-slate-500">
                     <Shield className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                     <p>

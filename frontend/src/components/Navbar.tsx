@@ -75,7 +75,7 @@ export default function Navbar() {
                                 >
                                     Panel
                                 </Link>
-                                {currentUser.role === 'ADMINISTRATOR' && (
+                                {currentUser.role === 'ADMIN' && (
                                     <Link
                                         to="/uzytkownicy"
                                         className={`text-sm font-medium transition ${location.pathname.startsWith('/uzytkownicy') ? 'text-[#B91C1C] font-semibold' : 'text-slate-600 hover:text-[#B91C1C]'}`}
@@ -83,8 +83,8 @@ export default function Navbar() {
                                         Użytkownicy
                                     </Link>
                                 )}
-                                {(currentUser.role === 'PRZEWODNICZACY' ||
-                                    currentUser.role === 'ADMINISTRATOR') && (
+                                {(currentUser.role === 'CHAIRPERSON' ||
+                                    currentUser.role === 'ADMIN') && (
                                     <Link
                                         to="/komisje"
                                         className={`text-sm font-medium transition ${location.pathname.startsWith('/komisje') ? 'text-[#B91C1C] font-semibold' : 'text-slate-600 hover:text-[#B91C1C]'}`}
@@ -173,7 +173,7 @@ export default function Navbar() {
                             >
                                 Panel
                             </Link>
-                            {currentUser && currentUser.role === 'ADMINISTRATOR' && (
+                            {currentUser && currentUser.role === 'ADMIN' && (
                                 <Link
                                     to="/uzytkownicy"
                                     onClick={() => setMenuOpen(false)}
@@ -183,8 +183,8 @@ export default function Navbar() {
                                 </Link>
                             )}
                             {currentUser &&
-                                (currentUser.role === 'PRZEWODNICZACY' ||
-                                    currentUser.role === 'ADMINISTRATOR') && (
+                                (currentUser.role === 'CHAIRPERSON' ||
+                                    currentUser.role === 'ADMIN') && (
                                     <Link
                                         to="/komisje"
                                         onClick={() => setMenuOpen(false)}
