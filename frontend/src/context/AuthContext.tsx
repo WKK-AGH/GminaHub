@@ -11,39 +11,22 @@ export interface CurrentUser {
 interface AuthContextType {
   currentUser: CurrentUser | null;
   isLoading: boolean;
-  login: (login: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   hasRole: (...roles: UserRole[]) => boolean;
 }
 
 function mapUser(user: UserResponse): CurrentUser {
   return {
-    id: user.id,
-    email: user.email ?? user.login,
+    id:        user.id,
+    email:     user.email ?? user.login,
     firstName: user.firstName,
-    lastName: user.lastName,
-    fullName: getFullName(user),
-    initials: getInitials(user),
-    role: user.role,
+    lastName:  user.lastName,
+    fullName:  getFullName(user),
+    initials:  getInitials(user),
+    role:      user.role,
   };
 }
-
-// Fallback accounts used when backend is unavailable (demo / development)
-const MOCK_USERS: Record<string, { password: string; user: UserResponse }> = {
-  'admin': {
-    password: 'Admin123!',
-    user: { id: '1', firstName: 'Administrator', lastName: '', role: 'ADMINISTRATOR', login: 'admin' },
-  },
-  'radny': {
-    password: 'Radny123!',
-    user: { id: '2', firstName: 'Jan', lastName: 'Kowalski', role: 'RADNY', login: 'radny' },
-  },
-  'przewodniczacy': {
-    password: 'Przew123!',
-    user: { id: '3', firstName: 'Anna', lastName: 'Wiśniewska', role: 'PRZEWODNICZACY', login: 'przewodniczacy' },
-  },
-};
-
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -72,7 +55,7 @@ export function useAuth() {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-  const [isLoading,   setIsLoading]   = useState(true); // true — czeka na refresh
+  const [isLoading,   setIsLoading]   = useState(true);
 
   // Przy starcie aplikacji próbuj odtworzyć sesję przez Refresh Token (HttpOnly Cookie)
   useEffect(() => {
@@ -81,9 +64,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const res = await authApi.refresh();
         if (res.success && res.accessToken) {
           setAccessToken(res.accessToken);
-          // Pobierz dane użytkownika po odświeżeniu tokenu
-          // Backend powinien zwrócić user w refresh response
-          // Jeśli nie — spróbuj pobrać przez /api/users/me (jeśli istnieje)
           const decoded = parseJwt(res.accessToken);
           if (decoded) {
             setCurrentUser({
@@ -111,27 +91,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('auth:logout', handler);
   }, []);
 
-  const login = useCallback(async (loginStr: string, password: string) => {
-    // Try real backend first
-    try {
-      const res = await authApi.login({ email: loginStr, password });
-      if (res.success) {
-        setAccessToken(res.accessToken);
-        setCurrentUser(mapUser(res.user));
-        return;
-      }
-    } catch {
-      // Backend unavailable — fall through to mock
-    }
-
-    // Mock fallback
-    const mock = MOCK_USERS[loginStr];
-    if (mock && mock.password === password) {
-      setCurrentUser(mapUser(mock.user));
+  const login = useCallback(async (email: string, password: string) => {
+    const res = await authApi.login({ email, password });
+    if (res.success) {
+      setAccessToken(res.accessToken);
+      setCurrentUser(mapUser(res.user));
       return;
     }
-
-    throw new Error('Nieprawidłowy login lub hasło');
+    throw new Error('Nieprawidłowy e-mail lub hasło');
   }, []);
 
   const logout = useCallback(async () => {
