@@ -166,7 +166,6 @@ model Voting {
   endedAt             DateTime?   @map("ended_at")
   totalEligibleVoters Int?        @map("total_eligible_voters")
   totalVotesCast      Int?        @map("total_votes_cast")
-  isValid             Boolean?    @map("is_valid")
   agendaItem          AgendaItem  @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
   votes               Vote[]
 

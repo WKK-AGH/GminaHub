@@ -93,7 +93,6 @@ CREATE TABLE votings (
   ended_at TIMESTAMP,
   total_eligible_voters INTEGER,
   total_votes_cast INTEGER,
-  is_valid BOOLEAN DEFAULT NULL,
   CHECK (ended_at > started_at)
 );
 CREATE TABLE votes (
