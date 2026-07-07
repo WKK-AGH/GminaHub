@@ -108,11 +108,23 @@ function SessionCard({ session }: { session: Session }) {
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 mb-3">
                 <span className="flex items-center gap-1">
                     <CalendarDays className="w-3.5 h-3.5" />
-                    {formatDate(session.scheduledAt)}
+                    {formatDate(
+                        session.scheduledAt ??
+                            session.scheduledDate ??
+                            session.scheduled_date ??
+                            session.date ??
+                            '',
+                    )}
                 </span>
                 <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5" />
-                    {formatTime(session.scheduledAt)}
+                    {formatTime(
+                        session.scheduledAt ??
+                            session.scheduledDate ??
+                            session.scheduled_date ??
+                            session.date ??
+                            '',
+                    )}
                 </span>
                 {itemCount > 0 && (
                     <span className="flex items-center gap-1">
@@ -130,7 +142,9 @@ function SessionCard({ session }: { session: Session }) {
                         <Radio className="w-3.5 h-3.5" /> Dołącz do głosowania
                     </Link>
                 )}
-                {session.status === 'PLANNED' && <AddToCalendar session={session} variant="link" />}
+                {session.status === 'SCHEDULED' && (
+                    <AddToCalendar session={session} variant="link" />
+                )}
                 <Link
                     to={`/sesja/${session.id}`}
                     className="text-xs font-semibold text-slate-500 hover:text-[#B91C1C] flex items-center gap-1 ml-auto"
@@ -156,7 +170,7 @@ export default function CouncilPanel() {
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
     const [notifications, setNotifications] = useState<Notification[]>(DEMO_NOTIFICATIONS);
 
-    const canManage = hasRole('PRZEWODNICZACY', 'ADMINISTRATOR');
+    const canManage = hasRole('CHAIRPERSON', 'ADMIN');
     const unreadCount = notifications.filter((n) => !n.read).length;
 
     useEffect(() => {
@@ -170,8 +184,8 @@ export default function CouncilPanel() {
     if (!currentUser) return null;
 
     const activeSessions = sessions.filter((s) => s.status === 'ACTIVE');
-    const plannedSessions = sessions.filter((s) => s.status === 'PLANNED');
-    const finishedSessions = sessions.filter((s) => s.status === 'FINISHED');
+    const plannedSessions = sessions.filter((s) => s.status === 'SCHEDULED');
+    const finishedSessions = sessions.filter((s) => s.status === 'CONCLUDED');
 
     // Filtrowanie i wyszukiwanie
     const filteredSessions = useMemo(() => {
@@ -374,7 +388,7 @@ export default function CouncilPanel() {
                                     >
                                         <Users className="w-4 h-4" /> Komisje
                                     </Link>
-                                    {hasRole('ADMINISTRATOR') && (
+                                    {hasRole('ADMIN') && (
                                         <Link
                                             to="/uzytkownicy"
                                             className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 px-4 py-2 rounded transition"

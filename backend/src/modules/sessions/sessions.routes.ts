@@ -1,16 +1,16 @@
+import { authenticateJWT, authorizeRoles } from '@/middleware/auth.middleware';
+import { validateBody, validateIdParam } from '@/middleware/validate';
 import { Router } from 'express';
 import {
-  getAllSessions,
-  createSession,
-  getSessionById,
-  updateSessionStatus,
-  addAgendaItem,
-  getSessionStatistics,
-  createOrUpdateSummary
+    addAgendaItem,
+    createOrUpdateSummary,
+    createSession,
+    getAllSessions,
+    getSessionById,
+    getSessionStatistics,
+    updateSessionStatus,
 } from './sessions.controller';
-import { validateBody, validateIdParam } from '@/middleware/validate';
 import { createSessionSchema } from './sessions.validation';
-import { authenticateJWT, authorizeRoles } from '@/middleware/auth.middleware';
 
 const router = Router();
 
@@ -19,35 +19,35 @@ router.get('/:id', validateIdParam, getSessionById);
 router.get('/:id/statistics', authenticateJWT, validateIdParam, getSessionStatistics);
 
 router.patch(
-  '/:id/status',
-  authenticateJWT,
-  authorizeRoles('ADMINISTRATOR', 'PRZEWODNICZACY'),
-  validateIdParam,
-  updateSessionStatus
+    '/:id/status',
+    authenticateJWT,
+    authorizeRoles('ADMIN', 'CHAIRPERSON'),
+    validateIdParam,
+    updateSessionStatus,
 );
 
 router.post(
-  '/:id/agenda',
-  authenticateJWT,
-  authorizeRoles('ADMINISTRATOR', 'PRZEWODNICZACY'),
-  validateIdParam,
-  addAgendaItem
+    '/:id/agenda',
+    authenticateJWT,
+    authorizeRoles('ADMIN', 'CHAIRPERSON'),
+    validateIdParam,
+    addAgendaItem,
 );
 
 router.post(
-  '/',
-  authenticateJWT,
-  authorizeRoles('ADMINISTRATOR', 'PRZEWODNICZACY'),
-  validateBody(createSessionSchema),
-  createSession
+    '/',
+    authenticateJWT,
+    authorizeRoles('ADMIN', 'CHAIRPERSON'),
+    validateBody(createSessionSchema),
+    createSession,
 );
 
 router.post(
-  '/:id/summary',
-  authenticateJWT,
-  authorizeRoles('ADMINISTRATOR', 'PRZEWODNICZACY'),
-  validateIdParam,
-  createOrUpdateSummary
+    '/:id/summary',
+    authenticateJWT,
+    authorizeRoles('ADMIN', 'CHAIRPERSON'),
+    validateIdParam,
+    createOrUpdateSummary,
 );
 
 export default router;

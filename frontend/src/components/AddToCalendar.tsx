@@ -5,7 +5,13 @@ import type { Session } from '../api/api';
 // ─── UTILS (wbudowane) ────────────────────────────────────────────────────────
 
 function googleCalendarUrl(session: Session): string {
-    const start = new Date(session.scheduledAt);
+    const start = new Date(
+        session.scheduledAt ??
+            session.scheduledDate ??
+            session.scheduled_date ??
+            session.date ??
+            '',
+    );
     const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
     const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 
@@ -21,7 +27,13 @@ function googleCalendarUrl(session: Session): string {
 }
 
 function downloadIcs(session: Session): void {
-    const start = new Date(session.scheduledAt);
+    const start = new Date(
+        session.scheduledAt ??
+            session.scheduledDate ??
+            session.scheduled_date ??
+            session.date ??
+            '',
+    );
     const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
     const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
 

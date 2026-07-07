@@ -167,7 +167,7 @@ export default function UserManagement() {
                 <div className="max-w-4xl mx-auto flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <p className="text-xs font-semibold text-[#B91C1C] uppercase tracking-widest mb-1">
-                            Administrator
+                            ADMIN
                         </p>
                         <h1 className="text-2xl font-bold text-slate-900">
                             Zarządzanie użytkownikami
@@ -199,21 +199,17 @@ export default function UserManagement() {
 
                 {!loading && (
                     <div className="grid grid-cols-3 gap-3">
-                        {(['MEMBER', 'CHAIRPERSON', 'ADMIN'] as UserRole[]).map(
-                            (role) => (
-                                <div
-                                    key={role}
-                                    className="bg-white border border-slate-200 rounded p-4 text-center"
-                                >
-                                    <p className="text-2xl font-bold text-[#B91C1C]">
-                                        {countByRole(role)}
-                                    </p>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        {ROLE_LABEL[role]}
-                                    </p>
-                                </div>
-                            ),
-                        )}
+                        {(['MEMBER', 'CHAIRPERSON', 'ADMIN'] as UserRole[]).map((role) => (
+                            <div
+                                key={role}
+                                className="bg-white border border-slate-200 rounded p-4 text-center"
+                            >
+                                <p className="text-2xl font-bold text-[#B91C1C]">
+                                    {countByRole(role)}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-0.5">{ROLE_LABEL[role]}</p>
+                            </div>
+                        ))}
                     </div>
                 )}
 
@@ -262,7 +258,9 @@ export default function UserManagement() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Adres e-mail *</label>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                                    Adres e-mail *
+                                </label>
                                 <input
                                     type="text"
                                     value={form.email}
@@ -310,29 +308,29 @@ export default function UserManagement() {
                                     Rola *
                                 </label>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                    {(
-                                        ['MEMBER', 'CHAIRPERSON', 'ADMIN'] as UserRole[]
-                                    ).map((role) => (
-                                        <button
-                                            key={role}
-                                            type="button"
-                                            onClick={() => handleField('role', role)}
-                                            className={`flex flex-col items-start px-4 py-3 rounded border text-left transition ${
-                                                form.role === role
-                                                    ? 'border-[#B91C1C] bg-red-50'
-                                                    : 'border-slate-200 bg-white hover:border-slate-300'
-                                            }`}
-                                        >
-                                            <span
-                                                className={`text-xs font-bold px-2 py-0.5 rounded border mb-1 ${ROLE_CONFIG[role].className}`}
+                                    {(['MEMBER', 'CHAIRPERSON', 'ADMIN'] as UserRole[]).map(
+                                        (role) => (
+                                            <button
+                                                key={role}
+                                                type="button"
+                                                onClick={() => handleField('role', role)}
+                                                className={`flex flex-col items-start px-4 py-3 rounded border text-left transition ${
+                                                    form.role === role
+                                                        ? 'border-[#B91C1C] bg-red-50'
+                                                        : 'border-slate-200 bg-white hover:border-slate-300'
+                                                }`}
                                             >
-                                                {ROLE_LABEL[role]}
-                                            </span>
-                                            <span className="text-xs text-slate-400">
-                                                {ROLE_CONFIG[role].desc}
-                                            </span>
-                                        </button>
-                                    ))}
+                                                <span
+                                                    className={`text-xs font-bold px-2 py-0.5 rounded border mb-1 ${ROLE_CONFIG[role].className}`}
+                                                >
+                                                    {ROLE_LABEL[role]}
+                                                </span>
+                                                <span className="text-xs text-slate-400">
+                                                    {ROLE_CONFIG[role].desc}
+                                                </span>
+                                            </button>
+                                        ),
+                                    )}
                                 </div>
                             </div>
 
@@ -462,8 +460,8 @@ export default function UserManagement() {
                 <div className="flex items-start gap-3 bg-slate-100 border border-slate-200 rounded p-4 text-xs text-slate-500">
                     <Shield className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
                     <p>
-                        Tylko Administrator może tworzyć konta i przypisywać role systemowe.
-                        Przewodniczący może zarządzać składem komisji, ale nie tworzyć nowych kont.
+                        Tylko ADMIN może tworzyć konta i przypisywać role systemowe. Przewodniczący
+                        może zarządzać składem komisji, ale nie tworzyć nowych kont.
                     </p>
                 </div>
             </div>

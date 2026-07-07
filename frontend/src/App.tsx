@@ -69,9 +69,7 @@ export default function App() {
                         <Route
                             path="/live/:sessionId"
                             element={
-                                <ProtectedRoute
-                                    roles={['RADNY', 'PRZEWODNICZACY', 'ADMINISTRATOR']}
-                                >
+                                <ProtectedRoute roles={['MEMBER', 'CHAIRPERSON', 'ADMIN']}>
                                     <LiveVoting />
                                 </ProtectedRoute>
                             }
@@ -79,7 +77,7 @@ export default function App() {
                         <Route
                             path="/sesja/nowa"
                             element={
-                                <ProtectedRoute roles={['PRZEWODNICZACY', 'ADMINISTRATOR']}>
+                                <ProtectedRoute roles={['CHAIRPERSON', 'ADMIN']}>
                                     <SessionCreation />
                                 </ProtectedRoute>
                             }
@@ -87,7 +85,7 @@ export default function App() {
                         <Route
                             path="/komisje"
                             element={
-                                <ProtectedRoute roles={['PRZEWODNICZACY', 'ADMINISTRATOR']}>
+                                <ProtectedRoute roles={['CHAIRPERSON', 'ADMIN']}>
                                     <CommitteeManagement />
                                 </ProtectedRoute>
                             }
@@ -95,7 +93,7 @@ export default function App() {
                         <Route
                             path="/agenda/:sessionId/edytuj"
                             element={
-                                <ProtectedRoute roles={['PRZEWODNICZACY', 'ADMINISTRATOR']}>
+                                <ProtectedRoute roles={['CHAIRPERSON', 'ADMIN']}>
                                     <AgendaCreation />
                                 </ProtectedRoute>
                             }
@@ -103,7 +101,7 @@ export default function App() {
                         <Route
                             path="/uzytkownicy"
                             element={
-                                <ProtectedRoute roles={['ADMINISTRATOR']}>
+                                <ProtectedRoute roles={['ADMIN']}>
                                     <UserManagement />
                                 </ProtectedRoute>
                             }

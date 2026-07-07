@@ -9,6 +9,7 @@ export default function SessionCreation() {
     const [title, setTitle] = useState('');
     const [date, setDate] = useState('');
     const [time, setTime] = useState('10:00');
+    const [quorumRequired, setQuorumRequired] = useState('1');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -19,15 +20,27 @@ export default function SessionCreation() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!title.trim() || !date || !time) {
+        if (!title.trim() || !date || !time || !quorumRequired.trim()) {
             setError('Proszę wypełnić wszystkie wymagane pola');
             return;
         }
+
+        const quorumValue = Number(quorumRequired);
+        if (!Number.isInteger(quorumValue) || quorumValue <= 0) {
+            setError('Quorum musi być dodatnią liczbą całkowitą');
+            return;
+        }
+
         setError(null);
         setLoading(true);
         try {
-            const scheduledAt = new Date(`${date}T${time}:00`).toISOString();
-            await sessionsApi.create({ title: title.trim(), scheduledAt } as CreateSessionPayload);
+            const scheduledDate = new Date(`${date}T${time}:00`).toISOString();
+            const payload: CreateSessionPayload = {
+                title: title.trim(),
+                scheduledDate,
+                quorumRequired: quorumValue,
+            };
+            await sessionsApi.create(payload);
             setSuccess(true);
             setTimeout(() => navigate('/panel'), 1500);
         } catch (err: unknown) {
@@ -129,6 +142,24 @@ export default function SessionCreation() {
                                 className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded focus:outline-none focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C]"
                             />
                         </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                            Quorum *
+                        </label>
+                        <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={quorumRequired}
+                            onChange={(e) => setQuorumRequired(e.target.value)}
+                            required
+                            className="w-full px-3 py-2.5 text-sm border border-slate-300 rounded focus:outline-none focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C]"
+                        />
+                        <p className="text-xs text-slate-400 mt-1">
+                            Minimalna liczba radnych wymagana do ważności obrad.
+                        </p>
                     </div>
 
                     <div className="flex items-start gap-3 bg-slate-50 border border-slate-200 rounded p-4 text-sm text-slate-600">

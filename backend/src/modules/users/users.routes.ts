@@ -1,9 +1,9 @@
+import { authenticateJWT, authorizeRoles } from '@/middleware/auth.middleware';
 import { Router } from 'express';
 import { getAllUsers } from './users.controller';
-import { authenticateJWT, authorizeRoles } from '@/middleware/auth.middleware';
 
 const router = Router();
 
-router.get('/', authenticateJWT, authorizeRoles('ADMINISTRATOR', 'PRZEWODNICZACY'), getAllUsers);
+router.get('/', authenticateJWT, authorizeRoles('ADMIN', 'CHAIRPERSON'), getAllUsers);
 
 export default router;
