@@ -5,33 +5,33 @@ export const WS_URL = import.meta.env.VITE_WS_URL ?? 'ws://localhost:5000';
 
 export interface ApiError { message: string; status: number; }
 
-export type UserRole     = 'RADNY' | 'PRZEWODNICZACY' | 'ADMINISTRATOR';
-export type SessionStatus = 'PLANNED' | 'ACTIVE' | 'FINISHED';
-export type VotingStatus  = 'PENDING' | 'ACTIVE' | 'COMPLETED';
-export type VoteValue     = 'YES' | 'NO' | 'ABSTAIN';
+export type UserRole      = 'MEMBER' | 'CHAIRPERSON' | 'ADMIN';
+export type SessionStatus = 'SCHEDULED' | 'ACTIVE' | 'CONCLUDED';
+export type VotingStatus  = 'PENDING' | 'OPEN' | 'CLOSED';
+export type VoteValue     = 'FOR' | 'AGAINST' | 'ABSTAIN';
 
 export const ROLE_LABEL: Record<UserRole, string> = {
-  RADNY:          'Radny',
-  PRZEWODNICZACY: 'Przewodniczący',
-  ADMINISTRATOR:  'Administrator',
+  MEMBER:         'Radny',
+  CHAIRPERSON:    'Przewodniczący',
+  ADMIN:          'Administrator',
 };
 
 export const VOTE_LABEL: Record<VoteValue, string> = {
-  YES:     'ZA',
-  NO:      'PRZECIW',
+  FOR:     'ZA',
+  AGAINST: 'PRZECIW',
   ABSTAIN: 'WSTRZYMUJĘ',
 };
 
 export const SESSION_STATUS_LABEL: Record<string, string> = {
-  PLANNED:  'Nadchodząca',
-  ACTIVE:   'W trakcie',
-  FINISHED: 'Zakończona',
+  SCHEDULED: 'Nadchodząca',
+  ACTIVE:    'W trakcie',
+  CONCLUDED: 'Zakończona',
 };
 
 export const VOTING_STATUS_LABEL: Record<string, string> = {
-  PENDING:   'Oczekuje',
-  ACTIVE:    'Aktywne',
-  COMPLETED: 'Zakończone',
+  PENDING: 'Oczekuje',
+  OPEN:    'Aktywne',
+  CLOSED:  'Zakończone',
 };
 
 // ─── MODELE — Użytkownik ──────────────────────────────────────────────────────
@@ -80,8 +80,17 @@ export interface Session {
   id: string;
   title: string;
   status: SessionStatus;
-  scheduledAt: string;
-  committeeId: string | null;
+  // Backend może zwracać różne nazwy pola daty
+  scheduledAt?: string;
+  scheduledDate?: string;
+  scheduled_date?: string;
+  date?: string;
+  // Dodatkowe pola z ERD
+  committeeId?: string | null;
+  committee_id?: string | null;
+  chairUserId?: string | null;
+  quorumRequired?: number;
+  currentAgendaItemId?: string | null;
   committee: Committee | null;
   agendaItems?: AgendaItem[];
   summary?: SessionSummary | null;
@@ -98,17 +107,28 @@ export interface CreateSessionPayload {
 export interface AgendaItem {
   id: string;
   title: string;
-  order: number;
-  sessionId: string;
+  order?: number;       // Prisma/camelCase
+  position?: number;    // SQL/snake_case z ERD
+  sessionId?: string;
+  session_id?: string;
   documents: SessionDocument[];
   voting: Voting[];
+  status?: string;
 }
 
 export interface SessionDocument {
   id: string;
-  title: string;
-  fileUrl: string;
-  agendaItemId: string;
+  title?: string;       // alias
+  fileName?: string;    // Prisma camelCase
+  file_name?: string;   // SQL snake_case z ERD
+  fileUrl?: string;
+  file_url?: string;    // SQL snake_case z ERD
+  agendaItemId?: string;
+  agenda_item_id?: string;
+  uploadedAt?: string;
+  fileSize?: number;
+  mimeType?: string;
+  deletedAt?: string | null;
 }
 
 // ─── MODELE — Komisja ─────────────────────────────────────────────────────────
@@ -133,27 +153,42 @@ export interface Voting {
   id: string;
   title: string;
   status: VotingStatus;
-  agendaItemId: string;
+  agendaItemId?: string;
+  agenda_item_id?: string;
+  startedAt?: string;
+  endedAt?: string;
+  totalEligibleVoters?: number;
+  totalVotesCast?: number;
+  isValid?: boolean | null;
   votes?: Vote[];
 }
 
 export interface Vote {
   id: string;
-  value: VoteValue;
-  votingId: string;
-  userId: string;
+  value?: VoteValue;    // Prisma camelCase
+  choice?: VoteValue;   // SQL snake_case z ERD
+  votingId?: string;
+  voting_id?: string;
+  userId?: string;
+  user_id?: string;
   user?: UserListItem;
+  votedAt?: string;
 }
 
-export interface CastVotePayload { value: VoteValue; }
+export interface CastVotePayload { value?: VoteValue; choice?: VoteValue; }
 
 // ─── MODELE — Podsumowanie / Logi ─────────────────────────────────────────────
 
 export interface SessionSummary {
-  id: string;
-  content: string;
-  createdAt: string;
-  sessionId: string;
+  id?: string;
+  sessionId?: number | string;
+  session_id?: number | string;
+  attendanceCount?: number;
+  notes?: string;
+  content?: string;     // używane przez frontend
+  pdfExportUrl?: string;
+  pdf_export_url?: string;
+  createdAt?: string;
 }
 
 export interface SystemLog {
@@ -273,7 +308,6 @@ export const usersApi = {
 // ─── DOKUMENTY API ────────────────────────────────────────────────────────────
 
 export const documentsApi = {
-  // Upload pliku do punktu agendy — wysyła FormData (multipart)
   upload: async (agendaItemId: string, file: File): Promise<SessionDocument> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -300,6 +334,5 @@ export const documentsApi = {
     return data.data as SessionDocument;
   },
 
-  // Usunięcie dokumentu
   delete: (documentId: string) => apiData<void>(`/documents/${documentId}`, { method: 'DELETE' }),
 };

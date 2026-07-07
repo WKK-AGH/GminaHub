@@ -1,961 +1,565 @@
 import {
-    ArrowLeft,
-    Check,
+    AlertCircle,
+    BarChart2,
+    Bell,
+    CalendarDays,
     CheckCircle2,
-    ChevronDown,
-    ChevronUp,
-    Crown,
-    Edit2,
-    Loader2,
-    Lock,
-    MoreHorizontal,
+    ChevronRight,
+    Clock,
+    FileText,
+    LogOut,
     Plus,
+    Radio,
     Search,
-    Shield,
-    Trash2,
-    UserPlus,
     Users,
     X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { usersApi, type UserListItem } from '../api/api';
+import { ROLE_LABEL, sessionsApi, type Session } from '../api/api';
+import { useAuth } from '../context/AuthContext';
+import AddToCalendar from './AddToCalendar';
 
-// ─── TYPES ────────────────────────────────────────────────────────────────────
+// ─── SKELETON ────────────────────────────────────────────────────────────────
 
-type CommitteeType = 'permanent' | 'temporary';
-type MemberRole = 'chairman' | 'member';
-
-interface CommitteeMember {
-    id: string;
-    userId: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    memberRole: MemberRole;
-    initials: string;
-    isOnline: boolean;
-}
-
-interface Committee {
-    id: string;
-    name: string;
-    description: string;
-    color: 'blue' | 'teal' | 'amber' | 'rose' | 'violet';
-    type: CommitteeType;
-    members: CommitteeMember[];
-    createdAt: string;
-}
-
-// ─── CONFIG ───────────────────────────────────────────────────────────────────
-
-const COLOR_CONFIG: Record<string, { dot: string; bg: string; text: string; border: string }> = {
-    blue: {
-        dot: 'bg-[#B91C1C]',
-        bg: 'bg-red-50',
-        text: 'text-[#991B1B]',
-        border: 'border-red-200',
-    },
-    teal: {
-        dot: 'bg-teal-500',
-        bg: 'bg-teal-50',
-        text: 'text-teal-700',
-        border: 'border-teal-200',
-    },
-    amber: {
-        dot: 'bg-amber-500',
-        bg: 'bg-amber-50',
-        text: 'text-amber-700',
-        border: 'border-amber-200',
-    },
-    rose: {
-        dot: 'bg-rose-500',
-        bg: 'bg-rose-50',
-        text: 'text-rose-700',
-        border: 'border-rose-200',
-    },
-    violet: {
-        dot: 'bg-violet-500',
-        bg: 'bg-violet-50',
-        text: 'text-violet-700',
-        border: 'border-violet-200',
-    },
-};
-
-const MEMBER_ROLE_CONFIG: Record<
-    MemberRole,
-    { label: string; className: string; icon: React.ReactNode; description: string }
-> = {
-    chairman: {
-        label: 'Przewodniczący',
-        className: 'bg-red-50   text-[#991B1B]   border-red-200',
-        icon: <Crown className="w-3 h-3" />,
-        description: 'Zarządza porządkiem obrad i otwiera głosowania.',
-    },
-    member: {
-        label: 'Członek',
-        className: 'bg-slate-100 text-slate-600  border-slate-200',
-        icon: <Users className="w-3 h-3" />,
-        description: 'Uczestniczy w głosowaniach.',
-    },
-};
-
-const ASSIGNABLE_ROLES: MemberRole[] = ['chairman', 'member'];
-
-const PERMISSIONS_MATRIX = [
-    {
-        action: 'Zarządzanie kontami użytkowników',
-        admin: true,
-        chair: false,
-        sec: false,
-        mem: false,
-    },
-    { action: 'Tworzenie/usuwanie komisji', admin: true, chair: false, sec: false, mem: false },
-    { action: 'Zarządzanie członkami komisji', admin: true, chair: true, sec: false, mem: false },
-    { action: 'Tworzenie i edycja agendy', admin: true, chair: true, sec: true, mem: false },
-    { action: 'Otwieranie i zamykanie głosowań', admin: true, chair: true, sec: false, mem: false },
-    { action: 'Uczestnictwo w głosowaniach', admin: true, chair: true, sec: false, mem: true },
-    { action: 'Przesyłanie załączników PDF', admin: true, chair: true, sec: true, mem: false },
-    { action: 'Podgląd agendy i dokumentów', admin: true, chair: true, sec: true, mem: true },
-    { action: 'Eksport podsumowań sesji', admin: true, chair: true, sec: true, mem: false },
-    { action: 'Dostęp do logów systemowych', admin: true, chair: false, sec: false, mem: false },
-];
-
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
-
-function uid() {
-    return Math.random().toString(36).slice(2, 9);
-}
-
-function MemberRoleBadge({ role }: { role: MemberRole }) {
-    const cfg = MEMBER_ROLE_CONFIG[role];
+function SkeletonCard() {
     return (
-        <span
-            className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full border ${cfg.className}`}
+        <div className="bg-white border border-slate-200 rounded p-4 animate-pulse">
+            <div className="flex items-start justify-between mb-3">
+                <div className="h-4 bg-slate-200 rounded w-2/3" />
+                <div className="h-5 bg-slate-100 rounded w-20" />
+            </div>
+            <div className="flex gap-4 mb-3">
+                <div className="h-3 bg-slate-100 rounded w-28" />
+                <div className="h-3 bg-slate-100 rounded w-16" />
+            </div>
+            <div className="border-t border-slate-100 pt-2">
+                <div className="h-3 bg-slate-100 rounded w-16 ml-auto" />
+            </div>
+        </div>
+    );
+}
+
+function SkeletonStats() {
+    return (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-white border border-slate-200 rounded p-4 animate-pulse">
+                    <div className="flex items-center gap-3">
+                        <div className="w-4 h-4 bg-slate-200 rounded" />
+                        <div className="space-y-1.5">
+                            <div className="h-2.5 bg-slate-100 rounded w-16" />
+                            <div className="h-5 bg-slate-200 rounded w-8" />
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+// ─── POWIADOMIENIE ────────────────────────────────────────────────────────────
+
+interface Notification {
+    id: string;
+    title: string;
+    message: string;
+    type: 'info' | 'success' | 'warning';
+    time: string;
+    read: boolean;
+}
+
+const DEMO_NOTIFICATIONS: Notification[] = [];
+
+// ─── KARTA SESJI ──────────────────────────────────────────────────────────────
+
+const SESSION_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+    SCHEDULED: { label: 'Zaplanowana', className: 'text-amber-700 bg-amber-50 border-amber-300' },
+    ACTIVE: { label: 'W trakcie', className: 'text-[#B91C1C] bg-red-50  border-red-300' },
+    CONCLUDED: { label: 'Zakończona', className: 'text-slate-500 bg-slate-100 border-slate-300' },
+};
+
+function formatDate(iso: string) {
+    return new Date(iso).toLocaleDateString('pl-PL', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+}
+function formatTime(iso: string) {
+    return new Date(iso).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
+}
+
+function SessionCard({ session }: { session: Session }) {
+    const cfg = SESSION_STATUS_CONFIG[session.status] ?? SESSION_STATUS_CONFIG.SCHEDULED;
+    const itemCount = session.agendaItems?.length ?? 0;
+    return (
+        <div
+            className={`bg-white border rounded p-4 hover:border-slate-300 transition ${session.status === 'ACTIVE' ? 'border-l-4 border-l-[#B91C1C] border-slate-200' : 'border-slate-200'}`}
         >
-            {cfg.icon} {cfg.label}
-        </span>
-    );
-}
-
-function Avatar({
-    initials,
-    isOnline,
-    size = 'md',
-}: {
-    initials: string;
-    isOnline?: boolean;
-    size?: 'sm' | 'md';
-}) {
-    const dim = size === 'sm' ? 'w-7 h-7 text-xs' : 'w-9 h-9 text-sm';
-    return (
-        <div className="relative shrink-0">
-            <div
-                className={`${dim} rounded-full bg-slate-200 text-slate-600 font-bold flex items-center justify-center`}
-            >
-                {initials}
-            </div>
-            {isOnline && (
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-white" />
-            )}
-        </div>
-    );
-}
-
-function Toast({ message, onClose }: { message: string; onClose: () => void }) {
-    return (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-slate-900 text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-xl">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            {message}
-            <button onClick={onClose} className="ml-2 opacity-60 hover:opacity-100 transition">
-                <X className="w-4 h-4" />
-            </button>
-        </div>
-    );
-}
-
-// ─── ADD MEMBER MODAL ─────────────────────────────────────────────────────────
-
-function AddMemberModal({
-    committee,
-    availableUsers,
-    onAdd,
-    onClose,
-}: {
-    committee: Committee;
-    availableUsers: UserListItem[];
-    onAdd: (committeeId: string, user: UserListItem, role: MemberRole) => void;
-    onClose: () => void;
-}) {
-    const [search, setSearch] = useState('');
-    const [selectedUser, setSelectedUser] = useState<UserListItem | null>(null);
-    const [selectedRole, setSelectedRole] = useState<MemberRole>('member');
-
-    const existingIds = useMemo(() => new Set(committee.members.map((m) => m.userId)), [committee]);
-
-    const filteredUsers = useMemo(
-        () =>
-            availableUsers.filter(
-                (u) =>
-                    !existingIds.has(u.id) &&
-                    `${u.firstName} ${u.lastName}`.toLowerCase().includes(search.toLowerCase()),
-            ),
-        [availableUsers, existingIds, search],
-    );
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl w-full max-w-md border border-slate-200 shadow-2xl overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                    <div>
-                        <h3 className="font-extrabold text-slate-900 flex items-center gap-2">
-                            <UserPlus className="w-4 h-4 text-[#B91C1C]" /> Dodaj członka
-                        </h3>
-                        <p className="text-xs text-slate-400 mt-0.5">{committee.name}</p>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-400 transition"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
-
-                <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input
-                            autoFocus
-                            type="text"
-                            placeholder="Szukaj po nazwisku..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B91C1C]"
-                        />
-                    </div>
-
-                    <div className="space-y-1">
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
-                            Dostępni użytkownicy ({filteredUsers.length})
-                        </p>
-                        {filteredUsers.length === 0 && (
-                            <div className="text-center py-8 text-slate-400">
-                                <Users className="w-7 h-7 mx-auto mb-2 opacity-30" />
-                                <p className="text-sm">Brak dostępnych użytkowników</p>
-                            </div>
-                        )}
-                        {filteredUsers.map((u) => (
-                            <button
-                                key={u.id}
-                                onClick={() =>
-                                    setSelectedUser(selectedUser?.id === u.id ? null : u)
-                                }
-                                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-left transition border ${
-                                    selectedUser?.id === u.id
-                                        ? 'bg-red-50 border-red-300'
-                                        : 'hover:bg-slate-50 border-transparent'
-                                }`}
-                            >
-                                <Avatar initials={`${u.firstName[0]}${u.lastName[0]}`} size="sm" />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-slate-900 truncate">
-                                        {u.firstName} {u.lastName}
-                                    </p>
-                                    <p className="text-xs text-slate-400 truncate">{u.login}</p>
-                                </div>
-                                {selectedUser?.id === u.id ? (
-                                    <div className="w-5 h-5 rounded-full bg-[#B91C1C] flex items-center justify-center shrink-0">
-                                        <Check className="w-3 h-3 text-white" />
-                                    </div>
-                                ) : (
-                                    <div className="w-5 h-5 rounded-full border-2 border-slate-200 shrink-0" />
-                                )}
-                            </button>
-                        ))}
-                    </div>
-
-                    {selectedUser && (
-                        <div className="border-t border-slate-100 pt-4 space-y-2">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                Rola dla:{' '}
-                                <span className="text-slate-700">
-                                    {selectedUser.firstName} {selectedUser.lastName}
-                                </span>
-                            </p>
-                            {ASSIGNABLE_ROLES.map((role) => (
-                                <button
-                                    key={role}
-                                    onClick={() => setSelectedRole(role)}
-                                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition ${
-                                        selectedRole === role
-                                            ? 'border-red-300 bg-red-50'
-                                            : 'border-slate-100 hover:border-slate-200'
-                                    }`}
-                                >
-                                    <div
-                                        className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center ${selectedRole === role ? 'border-[#B91C1C] bg-[#B91C1C]' : 'border-slate-300'}`}
-                                    >
-                                        {selectedRole === role && (
-                                            <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                                        )}
-                                    </div>
-                                    <div className="flex-1">
-                                        <MemberRoleBadge role={role} />
-                                        <p className="text-xs text-slate-400 mt-0.5">
-                                            {MEMBER_ROLE_CONFIG[role].description}
-                                        </p>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 py-2.5 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-100 transition"
-                    >
-                        Anuluj
-                    </button>
-                    <button
-                        onClick={() =>
-                            selectedUser &&
-                            (onAdd(committee.id, selectedUser, selectedRole), onClose())
-                        }
-                        disabled={!selectedUser}
-                        className="flex-1 py-2.5 text-sm font-bold text-white bg-[#B91C1C] rounded-xl hover:bg-[#991B1B] disabled:opacity-40 transition"
-                    >
-                        Dodaj do komisji
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ─── CREATE COMMITTEE MODAL ───────────────────────────────────────────────────
-
-function CreateCommitteeModal({
-    onCreate,
-    onClose,
-}: {
-    onCreate: (data: Omit<Committee, 'id' | 'members' | 'createdAt'>) => void;
-    onClose: () => void;
-}) {
-    const [name, setName] = useState('');
-    const [desc, setDesc] = useState('');
-    const [color, setColor] = useState<Committee['color']>('blue');
-    const [type, setType] = useState<CommitteeType>('permanent');
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-2xl w-full max-w-md border border-slate-200 shadow-2xl overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-                    <h3 className="font-extrabold text-slate-900 flex items-center gap-2">
-                        <Plus className="w-4 h-4 text-[#B91C1C]" /> Nowa komisja
-                    </h3>
-                    <button
-                        onClick={onClose}
-                        className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-400 transition"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
-                </div>
-                <div className="p-5 space-y-4">
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                            Nazwa komisji *
-                        </label>
-                        <input
-                            autoFocus
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="np. Komisja Finansów i Budżetu"
-                            className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B91C1C]"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">
-                            Opis
-                        </label>
-                        <textarea
-                            value={desc}
-                            onChange={(e) => setDesc(e.target.value)}
-                            rows={3}
-                            placeholder="Zakres i obowiązki komisji..."
-                            className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B91C1C] resize-none"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                            Typ
-                        </label>
-                        <div className="grid grid-cols-2 gap-2">
-                            {[
-                                ['permanent', 'Stała'],
-                                ['temporary', 'Doraźna'],
-                            ].map(([v, l]) => (
-                                <button
-                                    key={v}
-                                    onClick={() => setType(v as CommitteeType)}
-                                    className={`py-2.5 text-sm font-bold rounded-xl border transition ${type === v ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
-                                >
-                                    {l}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                            Kolor
-                        </label>
-                        <div className="flex gap-3">
-                            {(Object.keys(COLOR_CONFIG) as Committee['color'][]).map((k) => (
-                                <button
-                                    key={k}
-                                    onClick={() => setColor(k)}
-                                    className={`w-9 h-9 rounded-full transition-all ${COLOR_CONFIG[k].dot} ${color === k ? 'ring-2 ring-offset-2 ring-slate-500 scale-110' : 'opacity-50 hover:opacity-100'}`}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                </div>
-                <div className="flex gap-3 px-5 py-4 border-t border-slate-100 bg-slate-50/50">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 py-2.5 text-sm font-semibold text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-100 transition"
-                    >
-                        Anuluj
-                    </button>
-                    <button
-                        onClick={() => {
-                            if (name.trim()) {
-                                onCreate({ name, description: desc, color, type });
-                                onClose();
-                            }
-                        }}
-                        disabled={!name.trim()}
-                        className="flex-1 py-2.5 text-sm font-bold text-white bg-[#B91C1C] rounded-xl hover:bg-[#991B1B] disabled:opacity-40 transition"
-                    >
-                        Utwórz komisję
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ─── RBAC MATRIX ──────────────────────────────────────────────────────────────
-
-function RBACMatrix() {
-    const [isOpen, setIsOpen] = useState(false);
-    return (
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
-            <button
-                onClick={() => setIsOpen((v) => !v)}
-                className="w-full flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition"
-            >
-                <span className="font-extrabold text-slate-900 flex items-center gap-2 text-sm">
-                    <Shield className="w-4 h-4 text-[#B91C1C]" /> Macierz Uprawnień (RBAC)
+            <div className="flex items-start justify-between gap-3 mb-2">
+                <p className="font-semibold text-slate-900 text-sm leading-snug">{session.title}</p>
+                <span
+                    className={`text-xs font-semibold px-2 py-0.5 rounded border shrink-0 ${cfg.className}`}
+                >
+                    {cfg.label}
                 </span>
-                <div className="flex items-center gap-2 text-xs text-slate-400">
-                    <Lock className="w-3.5 h-3.5" /> Tylko do odczytu
-                    {isOpen ? (
-                        <ChevronUp className="w-4 h-4" />
-                    ) : (
-                        <ChevronDown className="w-4 h-4" />
-                    )}
-                </div>
-            </button>
-            {isOpen && (
-                <div className="border-t border-slate-100 overflow-x-auto">
-                    <table className="w-full text-xs">
-                        <thead>
-                            <tr className="bg-slate-50 border-b border-slate-100">
-                                <th className="text-left px-6 py-3 font-bold text-slate-500 w-1/2">
-                                    Akcja
-                                </th>
-                                {(['Administrator', 'Przewodniczący', 'Członek'] as const).map(
-                                    (r) => (
-                                        <th
-                                            key={r}
-                                            className="px-4 py-3 text-center font-bold text-slate-500"
-                                        >
-                                            {r}
-                                        </th>
-                                    ),
-                                )}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {PERMISSIONS_MATRIX.map((row, i) => (
-                                <tr
-                                    key={i}
-                                    className="border-b border-slate-50 hover:bg-slate-50/50 transition"
-                                >
-                                    <td className="px-6 py-2.5 text-slate-600 font-medium">
-                                        {row.action}
-                                    </td>
-                                    {[row.admin, row.chair, row.sec, row.mem].map((allowed, j) => (
-                                        <td key={j} className="px-4 py-2.5 text-center">
-                                            {allowed ? (
-                                                <Check className="w-3.5 h-3.5 text-emerald-500 mx-auto" />
-                                            ) : (
-                                                <X className="w-3.5 h-3.5 text-slate-200 mx-auto" />
-                                            )}
-                                        </td>
-                                    ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-        </div>
-    );
-}
-
-// ─── COMMITTEE CARD ───────────────────────────────────────────────────────────
-
-function CommitteeCard({
-    committee,
-    canManage,
-    onAddMember,
-    onRemoveMember,
-    onChangeRole,
-    onDelete,
-}: {
-    committee: Committee;
-    canManage: boolean;
-    onAddMember: (id: string) => void;
-    onRemoveMember: (committeeId: string, memberId: string) => void;
-    onChangeRole: (committeeId: string, memberId: string, role: MemberRole) => void;
-    onDelete: (id: string) => void;
-}) {
-    const [isExpanded, setExpanded] = useState(true);
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [menuOpen, setMenuOpen] = useState(false);
-
-    const color = COLOR_CONFIG[committee.color];
-    const chairman = committee.members.find((m) => m.memberRole === 'chairman');
-    const onlineCount = committee.members.filter((m) => m.isOnline).length;
-
-    return (
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-            <div className={`h-1 w-full ${color.dot}`} />
-            <div className="px-6 py-5">
-                <div className="flex items-start gap-3">
-                    <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${color.bg} border ${color.border}`}
-                    >
-                        <Users className={`w-5 h-5 ${color.text}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap mb-1">
-                                    <h3 className="font-extrabold text-slate-900 text-base leading-snug">
-                                        {committee.name}
-                                    </h3>
-                                    <span
-                                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border shrink-0 ${committee.type === 'permanent' ? 'bg-slate-100 text-slate-500 border-slate-200' : 'bg-violet-50 text-violet-600 border-violet-200'}`}
-                                    >
-                                        {committee.type === 'permanent' ? 'Stała' : 'Doraźna'}
-                                    </span>
-                                </div>
-                                <p className="text-xs text-slate-400 line-clamp-2">
-                                    {committee.description}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0">
-                                <button
-                                    onClick={() => setExpanded((v) => !v)}
-                                    className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-400 transition"
-                                >
-                                    {isExpanded ? (
-                                        <ChevronUp className="w-4 h-4" />
-                                    ) : (
-                                        <ChevronDown className="w-4 h-4" />
-                                    )}
-                                </button>
-                                {canManage && (
-                                    <div className="relative">
-                                        <button
-                                            onClick={() => setMenuOpen((v) => !v)}
-                                            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-400 transition"
-                                        >
-                                            <MoreHorizontal className="w-4 h-4" />
-                                        </button>
-                                        {menuOpen && (
-                                            <>
-                                                <div
-                                                    className="fixed inset-0 z-10"
-                                                    onClick={() => setMenuOpen(false)}
-                                                />
-                                                <div className="absolute right-0 top-9 z-20 bg-white border border-slate-200 rounded-xl shadow-xl py-1 min-w-40">
-                                                    <button
-                                                        onClick={() => {
-                                                            setMenuOpen(false);
-                                                            onAddMember(committee.id);
-                                                        }}
-                                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition"
-                                                    >
-                                                        <UserPlus className="w-3.5 h-3.5 text-[#B91C1C]" />{' '}
-                                                        Dodaj członka
-                                                    </button>
-                                                    <div className="my-1 border-t border-slate-100" />
-                                                    <button
-                                                        onClick={() => {
-                                                            setMenuOpen(false);
-                                                            onDelete(committee.id);
-                                                        }}
-                                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition"
-                                                    >
-                                                        <Trash2 className="w-3.5 h-3.5" /> Usuń
-                                                        komisję
-                                                    </button>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-4 mt-3 text-xs text-slate-400">
-                            <span className="flex items-center gap-1">
-                                <Users className="w-3.5 h-3.5" />
-                                {committee.members.length} członków
-                            </span>
-                            <span className="flex items-center gap-1 text-emerald-500">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                                {onlineCount} online
-                            </span>
-                            {chairman && (
-                                <span className="flex items-center gap-1 truncate">
-                                    <Crown className="w-3.5 h-3.5 text-red-400 shrink-0" />
-                                    <span className="truncate">
-                                        {chairman.firstName} {chairman.lastName}
-                                    </span>
-                                </span>
-                            )}
-                        </div>
-                    </div>
-                </div>
             </div>
-
-            {isExpanded && (
-                <div className="border-t border-slate-100">
-                    {committee.members.length === 0 && (
-                        <div className="text-center py-8 text-slate-400">
-                            <Users className="w-7 h-7 mx-auto mb-2 opacity-30" />
-                            <p className="text-sm">Brak członków — dodaj pierwszego</p>
-                        </div>
-                    )}
-                    <div className="divide-y divide-slate-50">
-                        {committee.members.map((member) => (
-                            <div
-                                key={member.id}
-                                className="flex items-center gap-3 px-6 py-3 hover:bg-slate-50/60 transition group"
-                            >
-                                <Avatar initials={member.initials} isOnline={member.isOnline} />
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-slate-900 truncate">
-                                        {member.firstName} {member.lastName}
-                                    </p>
-                                    <p className="text-xs text-slate-400 truncate">
-                                        {member.email}
-                                    </p>
-                                </div>
-                                {canManage && editingId === member.id ? (
-                                    <div className="flex items-center gap-1.5">
-                                        <select
-                                            defaultValue={member.memberRole}
-                                            autoFocus
-                                            onChange={(e) => {
-                                                onChangeRole(
-                                                    committee.id,
-                                                    member.id,
-                                                    e.target.value as MemberRole,
-                                                );
-                                                setEditingId(null);
-                                            }}
-                                            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#B91C1C]"
-                                        >
-                                            {ASSIGNABLE_ROLES.map((r) => (
-                                                <option key={r} value={r}>
-                                                    {MEMBER_ROLE_CONFIG[r].label}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <button
-                                            onClick={() => setEditingId(null)}
-                                            className="p-1.5 text-slate-400 hover:text-slate-600 transition"
-                                        >
-                                            <X className="w-3.5 h-3.5" />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-1.5">
-                                        <MemberRoleBadge role={member.memberRole} />
-                                        {canManage && (
-                                            <div className="flex items-center opacity-0 group-hover:opacity-100 transition gap-0.5">
-                                                <button
-                                                    onClick={() => setEditingId(member.id)}
-                                                    className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition"
-                                                >
-                                                    <Edit2 className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button
-                                                    onClick={() =>
-                                                        onRemoveMember(committee.id, member.id)
-                                                    }
-                                                    className="w-7 h-7 rounded-lg flex items-center justify-center hover:bg-red-50 text-slate-400 hover:text-red-500 transition"
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                    {canManage && (
-                        <div className="px-6 py-3 border-t border-slate-100">
-                            <button
-                                onClick={() => onAddMember(committee.id)}
-                                className="inline-flex items-center gap-2 text-sm font-semibold text-[#B91C1C] hover:text-[#7F1D1D] transition"
-                            >
-                                <UserPlus className="w-4 h-4" /> Dodaj członka
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 mb-3">
+                <span className="flex items-center gap-1">
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    {formatDate(session.scheduledAt)}
+                </span>
+                <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    {formatTime(session.scheduledAt)}
+                </span>
+                {itemCount > 0 && (
+                    <span className="flex items-center gap-1">
+                        <FileText className="w-3.5 h-3.5" />
+                        {itemCount} pkt. agendy
+                    </span>
+                )}
+            </div>
+            <div className="flex items-center gap-3 pt-2 border-t border-slate-100 flex-wrap">
+                {session.status === 'ACTIVE' && (
+                    <Link
+                        to={`/live/${session.id}`}
+                        className="text-xs font-semibold text-[#B91C1C] hover:underline flex items-center gap-1"
+                    >
+                        <Radio className="w-3.5 h-3.5" /> Dołącz do głosowania
+                    </Link>
+                )}
+                {session.status === 'SCHEDULED' && <AddToCalendar session={session} variant="link" />}
+                <Link
+                    to={`/sesja/${session.id}`}
+                    className="text-xs font-semibold text-slate-500 hover:text-[#B91C1C] flex items-center gap-1 ml-auto"
+                >
+                    Szczegóły <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+            </div>
         </div>
     );
 }
 
-// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+// ─── GŁÓWNY KOMPONENT ─────────────────────────────────────────────────────────
 
-export default function CommitteeManagement() {
-    const [committees, setCommittees] = useState<Committee[]>([]);
-    const [availableUsers, setAvailableUsers] = useState<UserListItem[]>([]);
+type ActiveTab = 'dashboard' | 'sessions' | 'notifications';
+
+export default function CouncilPanel() {
+    const { currentUser, logout, hasRole } = useAuth();
+    const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
+    const [sessions, setSessions] = useState<Session[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterType, setFilterType] = useState<'all' | CommitteeType>('all');
-    const [addMemberFor, setAddMemberFor] = useState<string | null>(null);
-    const [showCreate, setShowCreate] = useState(false);
-    const [showRBAC, setShowRBAC] = useState(false);
-    const [toast, setToast] = useState<string | null>(null);
-    const [isLoadingUsers, setLoadingUsers] = useState(true);
+    const [statusFilter, setStatusFilter] = useState<string>('ALL');
+    const [notifications, setNotifications] = useState<Notification[]>(DEMO_NOTIFICATIONS);
+
+    const canManage = hasRole('CHAIRPERSON', 'ADMIN');
+    const unreadCount = notifications.filter((n) => !n.read).length;
 
     useEffect(() => {
-        usersApi
+        sessionsApi
             .list()
-            .then((users) => setAvailableUsers(users))
-            .catch((err) => console.error('Błąd ładowania użytkowników:', err))
-            .finally(() => setLoadingUsers(false));
+            .then((data) => setSessions(data))
+            .catch((err) => setError(err.message ?? 'Błąd pobierania sesji'))
+            .finally(() => setLoading(false));
     }, []);
 
-    const showToast = (msg: string) => {
-        setToast(msg);
-        setTimeout(() => setToast(null), 3500);
-    };
+    if (!currentUser) return null;
 
-    const filtered = useMemo(
-        () =>
-            committees.filter(
-                (c) =>
-                    (filterType === 'all' || c.type === filterType) &&
-                    c.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    const activeSessions = sessions.filter((s) => s.status === 'ACTIVE');
+    const plannedSessions = sessions.filter((s) => s.status === 'SCHEDULED');
+    const finishedSessions = sessions.filter((s) => s.status === 'CONCLUDED');
+
+    // Filtrowanie i wyszukiwanie
+    const filteredSessions = useMemo(() => {
+        return sessions.filter((s) => {
+            const matchesQuery = s.title.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesStatus = statusFilter === 'ALL' || s.status === statusFilter;
+            return matchesQuery && matchesStatus;
+        });
+    }, [sessions, searchQuery, statusFilter]);
+
+    const markAllRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    const markRead = (id: string) =>
+        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+
+    const tabs = [
+        { id: 'dashboard' as ActiveTab, label: 'Pulpit' },
+        { id: 'sessions' as ActiveTab, label: 'Sesje' },
+        {
+            id: 'notifications' as ActiveTab,
+            label: (
+                <span className="flex items-center gap-1.5">
+                    Powiadomienia
+                    {unreadCount > 0 && (
+                        <span className="inline-flex items-center justify-center w-4 h-4 bg-[#B91C1C] text-white text-[10px] font-bold rounded-full">
+                            {unreadCount}
+                        </span>
+                    )}
+                </span>
             ),
-        [committees, searchQuery, filterType],
-    );
-
-    const handleAddMember = (committeeId: string, user: UserListItem, role: MemberRole) => {
-        const newMember: CommitteeMember = {
-            id: uid(),
-            userId: user.id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.login,
-            memberRole: role,
-            initials: `${user.firstName[0]}${user.lastName[0]}`.toUpperCase(),
-            isOnline: false,
-        };
-        setCommittees((prev) =>
-            prev.map((c) =>
-                c.id !== committeeId ? c : { ...c, members: [...c.members, newMember] },
-            ),
-        );
-        showToast(`Użytkownik ${user.firstName} ${user.lastName} dodany do komisji`);
-    };
-
-    const handleRemoveMember = (committeeId: string, memberId: string) => {
-        setCommittees((prev) =>
-            prev.map((c) =>
-                c.id !== committeeId
-                    ? c
-                    : { ...c, members: c.members.filter((m) => m.id !== memberId) },
-            ),
-        );
-        showToast('Usunięto członka z komisji');
-    };
-
-    const handleChangeRole = (committeeId: string, memberId: string, role: MemberRole) => {
-        setCommittees((prev) =>
-            prev.map((c) =>
-                c.id !== committeeId
-                    ? c
-                    : {
-                          ...c,
-                          members: c.members.map((m) =>
-                              m.id === memberId ? { ...m, memberRole: role } : m,
-                          ),
-                      },
-            ),
-        );
-        showToast(`Rola zaktualizowana: ${MEMBER_ROLE_CONFIG[role].label}`);
-    };
-
-    const handleCreateCommittee = (data: Omit<Committee, 'id' | 'members' | 'createdAt'>) => {
-        setCommittees((prev) => [
-            ...prev,
-            { ...data, id: uid(), members: [], createdAt: new Date().toISOString() },
-        ]);
-        showToast(`Komisja "${data.name}" została utworzona`);
-    };
-
-    const handleDeleteCommittee = (id: string) => {
-        const c = committees.find((c) => c.id === id);
-        setCommittees((prev) => prev.filter((c) => c.id !== id));
-        if (c) showToast(`Komisja "${c.name}" została usunięta`);
-    };
-
-    const committeeForModal = committees.find((c) => c.id === addMemberFor);
-    const totalMembers = committees.reduce((acc, c) => acc + c.members.length, 0);
+        },
+    ];
 
     return (
-        <div className="min-h-screen bg-slate-50">
-            {addMemberFor && committeeForModal && (
-                <AddMemberModal
-                    committee={committeeForModal}
-                    availableUsers={availableUsers}
-                    onAdd={handleAddMember}
-                    onClose={() => setAddMemberFor(null)}
-                />
-            )}
-            {showCreate && (
-                <CreateCommitteeModal
-                    onCreate={handleCreateCommittee}
-                    onClose={() => setShowCreate(false)}
-                />
-            )}
-            {toast && <Toast message={toast} onClose={() => setToast(null)} />}
-
+        <div className="min-h-[80vh] bg-slate-50">
+            {/* Nagłówek */}
             <div className="bg-white border-b border-slate-200 px-4 py-3">
-                <div className="max-w-5xl mx-auto">
-                    <Link
-                        to="/panel"
-                        className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 font-medium transition"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> Panel Rady
-                    </Link>
-                </div>
-            </div>
-
-            <div className="bg-white border-b border-slate-200 px-4 py-8">
-                <div className="max-w-5xl mx-auto space-y-5">
-                    <div className="flex flex-wrap items-start justify-between gap-4">
+                <div className="max-w-5xl mx-auto flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded bg-[#B91C1C] flex items-center justify-center text-white font-bold text-sm">
+                            {currentUser.initials}
+                        </div>
                         <div>
-                            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-950 tracking-tight">
-                                Zarządzanie komisjami
-                            </h1>
-                            <p className="text-slate-500 text-sm mt-1 flex items-center gap-3">
-                                <span>{committees.length} komisji</span>
-                                <span className="w-1 h-1 rounded-full bg-slate-300 inline-block" />
-                                <span>{totalMembers} członków</span>
-                                {isLoadingUsers && (
-                                    <span className="flex items-center gap-1 text-slate-400">
-                                        <Loader2 className="w-3 h-3 animate-spin" /> Ładowanie
-                                        użytkowników...
-                                    </span>
-                                )}
+                            <p className="font-semibold text-slate-900 text-sm">
+                                {currentUser.fullName}
                             </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setShowRBAC((v) => !v)}
-                                className={`inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl border transition ${showRBAC ? 'bg-red-50 text-[#991B1B] border-red-200' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'}`}
-                            >
-                                <Shield className="w-4 h-4" />
-                                <span className="hidden sm:inline">Uprawnienia</span>
-                            </button>
-                            <button
-                                onClick={() => setShowCreate(true)}
-                                className="inline-flex items-center gap-2 bg-slate-900 text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-slate-800 transition shadow-sm"
-                            >
-                                <Plus className="w-4 h-4" /> Nowa komisja
-                            </button>
+                            <p className="text-xs text-slate-400">{ROLE_LABEL[currentUser.role]}</p>
                         </div>
                     </div>
-
-                    <div className="flex flex-wrap items-center gap-3">
-                        <div className="relative flex-1 min-w-50 max-w-xs">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="Szukaj komisji..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#B91C1C] bg-slate-50"
-                            />
-                        </div>
-                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-                            {[
-                                ['all', 'Wszystkie'],
-                                ['permanent', 'Stałe'],
-                                ['temporary', 'Doraźne'],
-                            ].map(([v, l]) => (
-                                <button
-                                    key={v}
-                                    onClick={() => setFilterType(v as typeof filterType)}
-                                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${filterType === v ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                                >
-                                    {l}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                    <button
+                        onClick={logout}
+                        className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 border border-slate-200 px-3 py-1.5 rounded hover:bg-slate-50 transition"
+                    >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Wyloguj</span>
+                    </button>
                 </div>
             </div>
 
-            <div className="max-w-5xl mx-auto px-4 py-8 space-y-4">
-                {showRBAC && <RBACMatrix />}
+            {/* Zakładki */}
+            <div className="bg-white border-b border-slate-200 px-4">
+                <div className="max-w-5xl mx-auto flex">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`px-4 py-3 text-sm font-medium border-b-2 transition whitespace-nowrap ${activeTab === tab.id ? 'border-[#B91C1C] text-[#B91C1C]' : 'border-transparent text-slate-500 hover:text-slate-800'}`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
-                {filtered.length === 0 && (
-                    <div className="text-center py-20 text-slate-400">
-                        <Users className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                        <p className="font-bold text-slate-500">Nie znaleziono komisji</p>
-                        <p className="text-sm mt-1">
-                            Zmień kryteria wyszukiwania lub utwórz nową komisję.
-                        </p>
+            <div className="max-w-5xl mx-auto px-4 py-7">
+                {/* ── PULPIT ── */}
+                {activeTab === 'dashboard' && (
+                    <div className="space-y-7">
+                        <div className="flex items-start justify-between gap-4 flex-wrap">
+                            <div>
+                                <h1 className="text-xl font-bold text-[#B91C1C]">
+                                    Dzień dobry, {currentUser.firstName}
+                                </h1>
+                            </div>
+                            {canManage && (
+                                <Link
+                                    to="/sesja/nowa"
+                                    className="inline-flex items-center gap-2 bg-[#B91C1C] hover:bg-[#991B1B] text-white font-semibold px-4 py-2 rounded text-sm transition"
+                                >
+                                    <Plus className="w-4 h-4" /> Nowa sesja
+                                </Link>
+                            )}
+                        </div>
+
+                        {loading ? (
+                            <SkeletonStats />
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                {[
+                                    {
+                                        label: 'Sesji łącznie',
+                                        value: sessions.length,
+                                        icon: <CalendarDays className="w-4 h-4" />,
+                                    },
+                                    {
+                                        label: 'Aktywne',
+                                        value: activeSessions.length,
+                                        icon: <Radio className="w-4 h-4" />,
+                                    },
+                                    {
+                                        label: 'Nadchodzące',
+                                        value: plannedSessions.length,
+                                        icon: <Clock className="w-4 h-4" />,
+                                    },
+                                    {
+                                        label: 'Zakończone',
+                                        value: finishedSessions.length,
+                                        icon: <BarChart2 className="w-4 h-4" />,
+                                    },
+                                ].map((stat, i) => (
+                                    <div
+                                        key={i}
+                                        className="bg-white border border-slate-200 rounded p-4 flex items-center gap-3"
+                                    >
+                                        <div className="text-[#B91C1C] opacity-70">{stat.icon}</div>
+                                        <div>
+                                            <p className="text-xs text-slate-500">{stat.label}</p>
+                                            <p className="text-xl font-bold text-[#B91C1C]">
+                                                {stat.value}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {error && (
+                            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded p-3 text-sm text-red-700">
+                                <AlertCircle className="w-4 h-4 shrink-0" />
+                                {error}
+                            </div>
+                        )}
+
+                        {loading && (
+                            <div className="space-y-2">
+                                <SkeletonCard />
+                                <SkeletonCard />
+                            </div>
+                        )}
+
+                        {!loading && activeSessions.length > 0 && (
+                            <div>
+                                <h2 className="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide flex items-center gap-2">
+                                    <Radio className="w-4 h-4 text-[#B91C1C]" /> Sesja w toku
+                                </h2>
+                                <div className="space-y-2">
+                                    {activeSessions.map((s) => (
+                                        <SessionCard key={s.id} session={s} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {!loading && plannedSessions.length > 0 && (
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide flex items-center gap-2">
+                                        <CalendarDays className="w-4 h-4 text-[#B91C1C]" />{' '}
+                                        Nadchodzące sesje
+                                    </h2>
+                                    <button
+                                        onClick={() => setActiveTab('sessions')}
+                                        className="text-xs text-[#B91C1C] font-semibold hover:underline"
+                                    >
+                                        Wszystkie →
+                                    </button>
+                                </div>
+                                <div className="space-y-2">
+                                    {plannedSessions.slice(0, 3).map((s) => (
+                                        <SessionCard key={s.id} session={s} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {canManage && (
+                            <div className="bg-white border border-slate-200 rounded p-4">
+                                <h2 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                                    <Users className="w-4 h-4 text-[#B91C1C]" /> Zarządzanie
+                                </h2>
+                                <div className="flex flex-wrap gap-2">
+                                    <Link
+                                        to="/sesja/nowa"
+                                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#B91C1C] hover:bg-[#991B1B] px-4 py-2 rounded transition"
+                                    >
+                                        <Plus className="w-4 h-4" /> Nowa sesja
+                                    </Link>
+                                    <Link
+                                        to="/komisje"
+                                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#B91C1C] border border-[#B91C1C] hover:bg-red-50 px-4 py-2 rounded transition"
+                                    >
+                                        <Users className="w-4 h-4" /> Komisje
+                                    </Link>
+                                    {hasRole('ADMIN') && (
+                                        <Link
+                                            to="/uzytkownicy"
+                                            className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 border border-slate-300 hover:bg-slate-50 px-4 py-2 rounded transition"
+                                        >
+                                            <Users className="w-4 h-4" /> Użytkownicy
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {!loading && sessions.length === 0 && !error && (
+                            <div className="text-center py-12 text-slate-400 border border-dashed border-slate-200 rounded bg-white">
+                                <CalendarDays className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                                <p className="text-sm font-medium">Brak sesji w systemie</p>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {filtered.map((c) => (
-                    <CommitteeCard
-                        key={c.id}
-                        committee={c}
-                        canManage={true}
-                        onAddMember={(id) => setAddMemberFor(id)}
-                        onRemoveMember={handleRemoveMember}
-                        onChangeRole={handleChangeRole}
-                        onDelete={handleDeleteCommittee}
-                    />
-                ))}
+                {/* ── SESJE + WYSZUKIWARKA ── */}
+                {activeTab === 'sessions' && (
+                    <div>
+                        <div className="flex items-center justify-between mb-5">
+                            <h1 className="text-xl font-bold text-[#B91C1C]">Wszystkie sesje</h1>
+                            {canManage && (
+                                <Link
+                                    to="/sesja/nowa"
+                                    className="inline-flex items-center gap-2 bg-[#B91C1C] hover:bg-[#991B1B] text-white font-semibold px-4 py-2 rounded text-sm transition"
+                                >
+                                    <Plus className="w-4 h-4" /> Nowa sesja
+                                </Link>
+                            )}
+                        </div>
+
+                        {/* Wyszukiwarka i filtry */}
+                        <div className="bg-white border border-slate-200 rounded p-4 mb-4 space-y-3">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Szukaj sesji po nazwie..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full pl-9 pr-9 py-2.5 text-sm border border-slate-300 rounded focus:outline-none focus:border-[#B91C1C] focus:ring-1 focus:ring-[#B91C1C]"
+                                />
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
+                            <div className="flex gap-2 flex-wrap">
+                                {[
+                                    { value: 'ALL', label: 'Wszystkie' },
+                                    { value: 'ACTIVE', label: 'W trakcie' },
+                                    { value: 'SCHEDULED', label: 'Zaplanowane' },
+                                    { value: 'CONCLUDED', label: 'Zakończone' },
+                                ].map((f) => (
+                                    <button
+                                        key={f.value}
+                                        onClick={() => setStatusFilter(f.value)}
+                                        className={`text-xs font-semibold px-3 py-1.5 rounded border transition ${statusFilter === f.value ? 'bg-[#B91C1C] text-white border-[#B91C1C]' : 'bg-white text-slate-600 border-slate-200 hover:border-[#B91C1C] hover:text-[#B91C1C]'}`}
+                                    >
+                                        {f.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {loading && (
+                            <div className="space-y-2">
+                                <SkeletonCard />
+                                <SkeletonCard />
+                                <SkeletonCard />
+                            </div>
+                        )}
+                        {error && (
+                            <div className="text-red-600 text-sm bg-red-50 border border-red-200 rounded p-3">
+                                {error}
+                            </div>
+                        )}
+
+                        {!loading && filteredSessions.length === 0 && (
+                            <div className="text-center py-12 text-slate-400 border border-dashed border-slate-200 rounded bg-white">
+                                <Search className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                                <p className="text-sm font-medium">
+                                    {searchQuery
+                                        ? `Brak wyników dla „${searchQuery}"`
+                                        : 'Brak sesji w systemie'}
+                                </p>
+                                {searchQuery && (
+                                    <button
+                                        onClick={() => {
+                                            setSearchQuery('');
+                                            setStatusFilter('ALL');
+                                        }}
+                                        className="text-xs text-[#B91C1C] font-semibold mt-2 hover:underline"
+                                    >
+                                        Wyczyść filtry
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {!loading && filteredSessions.length > 0 && (
+                            <div>
+                                <p className="text-xs text-slate-400 mb-3">
+                                    Znaleziono: {filteredSessions.length}{' '}
+                                    {filteredSessions.length === 1 ? 'sesja' : 'sesji'}
+                                </p>
+                                <div className="space-y-2">
+                                    {filteredSessions.map((s) => (
+                                        <SessionCard key={s.id} session={s} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ── POWIADOMIENIA ── */}
+                {activeTab === 'notifications' && (
+                    <div>
+                        <div className="flex items-center justify-between mb-5">
+                            <h1 className="text-xl font-bold text-[#B91C1C]">Powiadomienia</h1>
+                            {unreadCount > 0 && (
+                                <button
+                                    onClick={markAllRead}
+                                    className="text-xs font-semibold text-[#B91C1C] hover:underline"
+                                >
+                                    Oznacz wszystkie jako przeczytane
+                                </button>
+                            )}
+                        </div>
+
+                        {notifications.length === 0 ? (
+                            <div className="text-center py-12 text-slate-400 border border-dashed border-slate-200 rounded bg-white">
+                                <Bell className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                                <p className="text-sm font-medium">Brak powiadomień</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {notifications.map((n) => (
+                                    <div
+                                        key={n.id}
+                                        className={`bg-white border rounded p-4 transition ${n.read ? 'border-slate-200' : 'border-l-4 border-l-[#B91C1C] border-slate-200'}`}
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex items-start gap-3">
+                                                <div
+                                                    className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${n.read ? 'bg-slate-300' : 'bg-[#B91C1C]'}`}
+                                                />
+                                                <div>
+                                                    <p
+                                                        className={`text-sm font-semibold ${n.read ? 'text-slate-600' : 'text-slate-900'}`}
+                                                    >
+                                                        {n.title}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500 mt-0.5">
+                                                        {n.message}
+                                                    </p>
+                                                    <p className="text-xs text-slate-400 mt-1">
+                                                        {n.time}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {!n.read && (
+                                                <button
+                                                    onClick={() => markRead(n.id)}
+                                                    className="text-xs text-slate-400 hover:text-[#B91C1C] shrink-0 flex items-center gap-1"
+                                                >
+                                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );
