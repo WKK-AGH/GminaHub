@@ -117,7 +117,7 @@ model Session {
   status               SessionStatus    @default(SCHEDULED)
   quorumRequired       Int              @map("quorum_required")
   currentAgendaItemId  Int?             @unique @map("current_agenda_item_id")
-  committee            Committee?       @relation(fields: [committeeId], references: [id])
+  committee            Committee?       @relation(fields: [committeeId], references: [id], onDelete: SetNull)
   chairUser            User?            @relation("ChairUser", fields: [chairUserId], references: [id])
   agendaItems          AgendaItem[]
   summary              SessionSummary?
@@ -166,7 +166,7 @@ model Voting {
   endedAt             DateTime?   @map("ended_at")
   totalEligibleVoters Int?        @map("total_eligible_voters")
   totalVotesCast      Int?        @map("total_votes_cast")
-  isValid             Boolean?
+  isValid             Boolean?    @map("is_valid")
   agendaItem          AgendaItem  @relation(fields: [agendaItemId], references: [id], onDelete: Cascade)
   votes               Vote[]
 
